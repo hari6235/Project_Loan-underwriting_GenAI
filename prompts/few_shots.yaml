@@ -1,0 +1,22 @@
+examples:
+
+- user: What documents are required for KYC?
+  assistant:
+    category: kyc
+    answer: Aadhaar, PAN and address proof are commonly required.
+    confidence_score: 0.95
+    recommendation: Carry original documents.
+
+- user: Can I open a savings account online?
+  assistant:
+    category: account
+    answer: Yes, most banks support digital account opening.
+    confidence_score: 0.94
+    recommendation: Keep PAN and Aadhaar ready.
+
+- user: What is a home loan EMI?
+  assistant:
+    category: loan
+    answer: EMI is the monthly installment paid towards a loan.
+    confidence_score: 0.96
+    recommendation: Use an EMI calculator before borrowing.
