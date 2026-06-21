@@ -1,15 +1,9 @@
 import streamlit as st
+import requests
 import json
 
 from guardrails.pii_detector import contains_pii
-from guardrails.topic_filter import is_banking_query
 from guardrails.prompt_injection import detect_prompt_injection
-
-from services.llm_service import ask_llm
-
-from models.response_model import BankingResponse
-from models.risk_model import RiskAssessment
-
 
 st.set_page_config(
     page_title="Loan Underwriting & Credit Risk Assistant",
@@ -18,277 +12,101 @@ st.set_page_config(
 
 st.title("🏦 Loan Underwriting & Credit Risk Assistant")
 
-# ==========================================================
-# BANKING FAQ CHATBOT
-# ==========================================================
+API_URL = "http://127.0.0.1:8000/chat"
 
-st.header("💬 Banking FAQ Chatbot")
 
-query = st.text_area(
-    "Ask a banking question"
-)
+# -------------------------
+# SESSION STATE
+# -------------------------
+if "chat_history" not in st.session_state:
+    st.session_state.chat_history = []
+
+if "session_id" not in st.session_state:
+    st.session_state.session_id = "user1"
+
+
+# -------------------------
+# SIMPLE BANKING FILTER (FIXED)
+# -------------------------
+def is_valid_query(query: str) -> bool:
+
+    q = query.lower()
+
+    banking_keywords = [
+        "credit", "loan", "emi", "dti", "interest",
+        "bank", "account", "kyc", "pan",
+        "score", "risk", "underwriting",
+        "document", "verify",
+        "explain", "simple", "what", "how"
+    ]
+
+    return any(k in q for k in banking_keywords)
+
+
+# -------------------------
+# CHAT UI
+# -------------------------
+st.header("💬 Banking Assistant Chatbot")
+
+query = st.text_area("Ask a banking question")
 
 if st.button("Submit Question"):
 
     if contains_pii(query):
-
-        st.error(
-            "PII Detected. Please remove personal information."
-        )
+        st.error("PII Detected. Please remove personal information.")
 
     elif detect_prompt_injection(query):
+        st.error("Prompt Injection Attempt Detected.")
 
-        st.error(
-            "Prompt Injection Attempt Detected."
-        )
-
-    elif not is_banking_query(query):
-
-        st.error(
-            "I am a Banking and Loan Underwriting Assistant designed to help with banking, loans, credit risk assessment, KYC requirements, account services, interest rates, and related financial queries. Please ask a banking or financial services question to continue."
-        )
+    elif not is_valid_query(query):
+        st.error("Please ask banking/loan/credit related questions only.")
 
     else:
 
-        response = ask_llm(query)
+        payload = {
+            "session_id": st.session_state.session_id,
+            "message": query
+        }
 
-        try:
+        response = requests.post(API_URL, json=payload)
 
-            parsed = BankingResponse(
-                **json.loads(response)
-            )
+        if response.status_code == 200:
 
-            st.success(
-                "Validated Response"
-            )
+            data = response.json()
 
-            st.json(
-                parsed.model_dump()
-            )
+            st.session_state.chat_history.append(("user", query))
+            st.session_state.chat_history.append(("bot", data["response"]))
 
-        except Exception as e:
+        else:
+            st.error(f"Backend Error: {response.text}")
 
-            st.error(
-                f"Validation Failed: {e}"
-            )
 
-            st.text(response)
+# -------------------------
+# CHAT DISPLAY
+# -------------------------
+st.subheader("Conversation")
 
-# ==========================================================
-# LOAN UNDERWRITING SECTION
-# ==========================================================
+for role, msg in st.session_state.chat_history:
 
-st.divider()
-
-st.header("📊 Loan Underwriting Assessment")
-
-salary = st.number_input(
-    "Monthly Income",
-    min_value=0,
-    value=0
-)
-
-emi = st.number_input(
-    "Existing EMI",
-    min_value=0,
-    value=0
-)
-
-credit_score = st.number_input(
-    "Credit Score",
-    min_value=300,
-    max_value=900,
-    value=750
-)
-
-loan_amount = st.number_input(
-    "Loan Amount",
-    min_value=0,
-    value=0
-)
-
-if st.button("Assess Risk"):
-
-    if salary == 0 or loan_amount == 0:
-
-        st.error(
-            "Salary and Loan Amount must be greater than 0."
-        )
-
+    if role == "user":
+        st.markdown(f"**You:** {msg}")
     else:
+        st.json(msg)
 
-        # --------------------------------------------------
-        # Debt-to-Income Ratio
-        # --------------------------------------------------
 
-        dti = emi / salary
+# -------------------------
+# RESET CHAT
+# -------------------------
+if st.button("Reset Chat"):
 
-        # --------------------------------------------------
-        # Credit Score Evaluation
-        # --------------------------------------------------
+    st.session_state.chat_history = []
 
-        if credit_score > 750:
-
-            credit_category = "Excellent"
-
-        elif 700 <= credit_score <= 750:
-
-            credit_category = "Good"
-
-        elif 650 <= credit_score < 700:
-
-            credit_category = "Moderate"
-
-        else:
-
-            credit_category = "High Risk"
-
-        # --------------------------------------------------
-        # Risk Scoring
-        # --------------------------------------------------
-
-        risk_score = 50
-
-        if credit_category == "Excellent":
-
-            risk_score -= 20
-
-        elif credit_category == "Good":
-
-            risk_score -= 10
-
-        elif credit_category == "Moderate":
-
-            risk_score += 10
-
-        else:
-
-            risk_score += 20
-
-        if dti > 0.50:
-
-            risk_score += 30
-
-        elif dti > 0.40:
-
-            risk_score += 10
-
-        else:
-
-            risk_score -= 5
-
-        risk_score = max(
-            0,
-            min(100, int(risk_score))
+    try:
+        requests.post(
+            "http://127.0.0.1:8000/reset",
+            params={"session_id": st.session_state.session_id}
         )
+    except:
+        pass
 
-        # --------------------------------------------------
-        # Risk Category
-        # --------------------------------------------------
-
-        if risk_score < 30:
-
-            risk_category = "LOW"
-
-            recommendation = "APPROVE"
-
-        elif risk_score < 60:
-
-            risk_category = "MEDIUM"
-
-            recommendation = "CONSIDER"
-
-        else:
-
-            risk_category = "HIGH"
-
-            recommendation = "REJECT"
-
-        approval_probability = f"{100 - risk_score}%"
-
-        assessment = RiskAssessment(
-
-            category="loan_underwriting",
-
-            risk_score=risk_score,
-
-            risk_category=risk_category,
-
-            approval_probability=approval_probability,
-
-            recommendation=recommendation
-        )
-
-        # --------------------------------------------------
-        # Dashboard Metrics
-        # --------------------------------------------------
-
-        st.success(
-            "Risk Assessment Completed Successfully"
-        )
-
-        col1, col2, col3 = st.columns(3)
-
-        with col1:
-            st.metric(
-                "Risk Score",
-                risk_score
-            )
-
-        with col2:
-            st.metric(
-                "Credit Score",
-                credit_score
-            )
-
-        with col3:
-            st.metric(
-                "DTI Ratio",
-                round(dti, 2)
-            )
-
-        st.subheader("Assessment Result")
-
-        st.json(
-            assessment.model_dump()
-        )
-
-        # --------------------------------------------------
-        # Explainability Section
-        # --------------------------------------------------
-
-        with st.expander(
-            "View Underwriting Reasoning"
-        ):
-
-            st.write(
-                f"Step 1: Monthly Income Evaluated = ₹{salary:,.0f}"
-            )
-
-            st.write(
-                f"Step 2: Existing EMI Evaluated = ₹{emi:,.0f}"
-            )
-
-            st.write(
-                f"Step 3: Debt-to-Income Ratio Calculated = {round(dti, 2)}"
-            )
-
-            st.write(
-                f"Step 4: Credit Score Evaluated = {credit_score}"
-            )
-
-            st.write(
-                f"Step 5: Credit Category = {credit_category}"
-            )
-
-            st.write(
-                f"Step 6: Risk Score Generated = {risk_score}"
-            )
-
-            st.write(
-                f"Step 7: Risk Category Determined = {risk_category}"
-            )
-
-            st.write(
-                f"Step 8: Final Recommendation = {recommendation}"
-            )
+    st.success("Chat reset completed")

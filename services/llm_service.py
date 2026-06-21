@@ -1,85 +1,70 @@
 import os
-from numpy import rint
-import yaml
-
 from dotenv import load_dotenv
-from openai import OpenAI
 
-import json
+from langchain_openai import ChatOpenAI
+
+from tools.langchain_tools import (
+    credit_score_analyzer,
+    dti_calculator,
+    document_verification
+)
 
 load_dotenv()
 
-client = OpenAI(
+llm = ChatOpenAI(
+    model="gpt-4o-mini",
+    temperature=0.2,
     api_key=os.getenv("OPENAI_API_KEY")
 )
 
-
-def load_prompts():
-
-    with open(
-        "prompts/system_prompt.yaml",
-        "r"
-    ) as file:
-
-        system_prompt = yaml.safe_load(file)
-
-    with open(
-        "prompts/few_shots.yaml",
-        "r"
-    ) as file:
-
-        few_shots = yaml.safe_load(file)
-
-    return system_prompt, few_shots
-
-
+# -------------------------
+# LLM CALL
+# -------------------------
 def ask_llm(query: str):
 
-    system_prompt, few_shots = load_prompts()
+    response = llm.invoke(query)
 
-    messages = []
+    return {
+        "type": "llm_response",
+        "response": response.content
+    }
 
-    messages.append(
-        {
-            "role": "system",
-            "content":
-                system_prompt["role"]
-                + "\n"
-                + system_prompt["instructions"]
+
+# -------------------------
+# TOOL ROUTER (FIXED SCHEMA MAPPING)
+# -------------------------
+def run_tools(query: str):
+
+    q = query.lower()
+
+    # ---------------- CREDIT SCORE ----------------
+    if "credit" in q:
+        return {
+            "type": "tool_response",
+            "response": credit_score_analyzer.invoke({
+                "credit_score": 720
+            })
         }
-    )
 
-    for example in few_shots["examples"]:
-
-        messages.append(
-            {
-                "role": "user",
-                "content": example["user"]
-            }
-        )
-
-        messages.append(
-            {
-                "role": "assistant",
-                "content": json.dumps(example["assistant"])
-            }
-        )
-
-    messages.append(
-        {
-            "role": "user",
-            "content": query
+    # ---------------- DTI ----------------
+    if "dti" in q:
+        return {
+            "type": "tool_response",
+            "response": dti_calculator.invoke({
+                "income": 100000,
+                "emi": 30000
+            })
         }
-    )
 
-    response = client.chat.completions.create(
-        model="gpt-4o-mini",
-        messages=messages,
-        temperature=0.2
-    )
+    # ---------------- DOCUMENT ----------------
+    if "document" in q or "pan" in q:
+        return {
+            "type": "tool_response",
+            "response": document_verification.invoke({
+                "document_type": "PAN",
+                "document_number": "ABCDE1234F"
+            })
+        }
 
-    content = response.choices[0].message.content
-    print("\nLLM RESPONSE:")
-    print(content)
-    print("\n")
-    return content
+    # fallback
+    return ask_llm(query)

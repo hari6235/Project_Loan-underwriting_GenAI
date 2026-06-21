@@ -1,22 +1,45 @@
 examples:
 
-- user: What documents are required for KYC?
+- user: What is the risk rating for applicant ID 40821?
   assistant:
-    category: kyc
-    answer: Aadhaar, PAN and address proof are commonly required.
-    confidence_score: 0.95
-    recommendation: Carry original documents.
-
-- user: Can I open a savings account online?
-  assistant:
-    category: account
-    answer: Yes, most banks support digital account opening.
-    confidence_score: 0.94
-    recommendation: Keep PAN and Aadhaar ready.
-
-- user: What is a home loan EMI?
-  assistant:
-    category: loan
-    answer: EMI is the monthly installment paid towards a loan.
+    type: underwriting_response
+    applicant_id: "40821"
+    risk_rating: LOW RISK
+    reasoning: Based on credit score 720, DTI 34%, and clean document verification.
+    recommendation: Sanction loan up to ₹25,00,000
     confidence_score: 0.96
-    recommendation: Use an EMI calculator before borrowing.
+
+- user: Why was Ramesh’s home loan rejected?
+  assistant:
+    type: underwriting_response
+    applicant_id: "Ramesh"
+    risk_rating: HIGH RISK
+    rejection_reasons:
+      - Credit score 580 below threshold 650
+      - DTI ratio 52% exceeds safe limit 45%
+      - Income mismatch between declared income and ITR records
+    recommendation: Reject loan application
+    confidence_score: 0.97
+
+- user: Can you re-assess if we add a co-applicant with income 6L?
+  assistant:
+    type: underwriting_response
+    applicant_id: "UNKNOWN"
+    risk_rating: MEDIUM RISK
+    reasoning: Adding co-applicant reduces combined DTI to 38% improving eligibility.
+    recommendation: Approve with conditions such as collateral or reduced tenure
+    confidence_score: 0.95
+
+- user: What is loan underwriting?
+  assistant:
+    type: llm_response
+    response: Loan underwriting is the process of evaluating a borrower's creditworthiness based on income, credit score, debt, and documents to decide loan approval.
+    confidence_score: 0.93
+
+- user: What is DTI ratio?
+  assistant:
+    type: tool_response
+    response:
+      dti_ratio: 0.30
+      risk: LOW RISK
+      max_loan_multiplier: 5

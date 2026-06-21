@@ -1,20 +1,24 @@
-BANKING_KEYWORDS = [
-    "loan",
-    "credit",
-    "bank",
-    "account",
-    "kyc",
-    "interest",
-    "insurance",
-    "emi",
-    "mortgage"
-]
+def is_banking_query(query: str) -> bool:
 
+    q = query.lower()
 
-def is_banking_query(text: str) -> bool:
-    text = text.lower()
+    banking_keywords = [
+        "credit",
+        "loan",
+        "emi",
+        "dti",
+        "bank",
+        "account",
+        "interest",
+        "mortgage",
+        "risk",
+        "underwriting",
+        "kyc",
+        "pan",
+        "aadhaar",
+        "document",
+        "verify",
+        "verification"
+    ]
 
-    return any(
-        keyword in text
-        for keyword in BANKING_KEYWORDS
-    )
+    return any(keyword in q for keyword in banking_keywords)

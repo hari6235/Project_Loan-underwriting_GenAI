@@ -1,5 +1,11 @@
-streamlit
-openai
+langchain
+langchain-core
+langchain-openai
 pydantic
+fastapi
+uvicorn
+chromadb
 python-dotenv
-pyyaml
+streamlit
+langsmith
+tenacity
