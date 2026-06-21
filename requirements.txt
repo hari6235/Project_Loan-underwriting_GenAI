@@ -4,7 +4,7 @@ langchain-openai
 pydantic
 fastapi
 uvicorn
-chromadb
+faiss-cpu
 python-dotenv
 streamlit
 langsmith
