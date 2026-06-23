@@ -1,6 +1,7 @@
 langchain
 langchain-core
 langchain-openai
+langchain-community
 pydantic
 fastapi
 uvicorn
@@ -9,3 +10,4 @@ python-dotenv
 streamlit
 langsmith
 tenacity
+pyyaml

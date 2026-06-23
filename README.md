@@ -49,6 +49,7 @@ A LangChain-powered AI assistant for banking operations. This project helps with
 │   ├── dti_tool.py               # DTI ratio calculator
 │   ├── document_tool.py          # Document verification
 │   ├── langchain_tools.py        # LangChain tool wrappers
+    ├── parse_values.py           # Tool parsing logic
 │   ├── router.py                 # Tool routing logic
 │   └── tool_registry.py          # Tool registry
 ├── vectorstore/                  # Vector search & embeddings

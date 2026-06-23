@@ -18,7 +18,17 @@ def is_banking_query(query: str) -> bool:
         "aadhaar",
         "document",
         "verify",
-        "verification"
+        "verification",
+        "cibil",
+        "repayment",
+        "collateral",
+        "tenure",
+        "sanction",
+        # broader help keywords
+        "explain",
+        "what",
+        "how",
+        "simple",
     ]
 
     return any(keyword in q for keyword in banking_keywords)

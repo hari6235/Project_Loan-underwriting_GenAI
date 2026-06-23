@@ -6,6 +6,7 @@ import json
 
 from services.llm_service import ask_llm, run_tools
 from memory.memory_store import MemoryStore
+from models.response_model import ChatResponse
 
 router = APIRouter()
 
@@ -23,26 +24,22 @@ class ChatRequest(BaseModel):
 # -------------------------
 # CHAT ENDPOINT
 # -------------------------
-@router.post("/chat")
+@router.post("/chat", response_model=ChatResponse)
 def chat(req: ChatRequest):
 
     message = req.message.strip()
     message_lower = message.lower()
 
     # -------------------------
-    # GET HISTORY (SAFE HANDLING)
+    # GET HISTORY
     # -------------------------
     history = memory.get(req.session_id)
 
     context_text = ""
 
-    # FIX: history is dict format, not tuple
     for h in history:
-
         user_msg = h.get("user", "")
-
         assistant_msg = h.get("assistant", "")
-
         context_text += f"User: {user_msg}\nAssistant: {assistant_msg}\n"
 
     # -------------------------
@@ -50,8 +47,14 @@ def chat(req: ChatRequest):
     # -------------------------
     if (
         "credit score" in message_lower
+        or "cibil" in message_lower
         or "dti" in message_lower
+        or "emi" in message_lower
+        or "debt" in message_lower
         or "document" in message_lower
+        or "pan" in message_lower
+        or "aadhaar" in message_lower
+        or "kyc" in message_lower
     ):
         response = run_tools(message)
         response_type = "tool"
@@ -79,7 +82,7 @@ Answer clearly and simply.
         response_type = "llm"
 
     # -------------------------
-    # SAVE MEMORY (FIXED FORMAT)
+    # SAVE MEMORY
     # -------------------------
     memory.add(
         req.session_id,
@@ -93,11 +96,11 @@ Answer clearly and simply.
     # -------------------------
     # RETURN
     # -------------------------
-    return {
-        "response": response,
-        "session_id": req.session_id,
-        "history": memory.get(req.session_id)
-    }
+    return ChatResponse(
+        response=response,
+        session_id=req.session_id,
+        history=memory.get(req.session_id)
+    )
 
 
 # -------------------------

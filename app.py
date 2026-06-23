@@ -1,9 +1,11 @@
 import streamlit as st
 import requests
 import json
+import uuid
 
 from guardrails.pii_detector import contains_pii
 from guardrails.prompt_injection import detect_prompt_injection
+from guardrails.topic_filter import is_banking_query
 
 st.set_page_config(
     page_title="Loan Underwriting & Credit Risk Assistant",
@@ -22,25 +24,7 @@ if "chat_history" not in st.session_state:
     st.session_state.chat_history = []
 
 if "session_id" not in st.session_state:
-    st.session_state.session_id = "user1"
-
-
-# -------------------------
-# SIMPLE BANKING FILTER (FIXED)
-# -------------------------
-def is_valid_query(query: str) -> bool:
-
-    q = query.lower()
-
-    banking_keywords = [
-        "credit", "loan", "emi", "dti", "interest",
-        "bank", "account", "kyc", "pan",
-        "score", "risk", "underwriting",
-        "document", "verify",
-        "explain", "simple", "what", "how"
-    ]
-
-    return any(k in q for k in banking_keywords)
+    st.session_state.session_id = str(uuid.uuid4())
 
 
 # -------------------------
@@ -58,7 +42,7 @@ if st.button("Submit Question"):
     elif detect_prompt_injection(query):
         st.error("Prompt Injection Attempt Detected.")
 
-    elif not is_valid_query(query):
+    elif not is_banking_query(query):
         st.error("Please ask banking/loan/credit related questions only.")
 
     else:
