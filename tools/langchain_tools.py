@@ -1,83 +1,26 @@
+# FILE: tools/langchain_tools.py
+
+
 from langchain_core.tools import tool
 
-# -------------------------
-# CREDIT SCORE TOOL
-# -------------------------
+from tools.credit_score_tool import credit_score_analyzer as _credit_score_analyzer
+from tools.dti_tool import dti_calculator as _dti_calculator
+from tools.document_tool import document_verification as _document_verification
+
+
 @tool
-def credit_score_analyzer(applicant_id: str) -> dict:
-    """
-    Fetch credit score and classify risk.
-    """
-
-    # Dummy logic (replace with your existing logic later)
-    credit_score = 720
-
-    if credit_score >= 750:
-        category = "EXCELLENT"
-        risk = "LOW"
-        approval = "95%"
-    elif credit_score >= 700:
-        category = "GOOD"
-        risk = "MEDIUM"
-        approval = "80%"
-    else:
-        category = "POOR"
-        risk = "HIGH"
-        approval = "40%"
-
-    return {
-        "applicant_id": applicant_id,
-        "credit_score": credit_score,
-        "category": category,
-        "risk_level": risk,
-        "approval_probability": approval
-    }
+def credit_score_analyzer(credit_score: int) -> dict:
+    """Classify credit risk and approval likelihood for a given credit score (300-900)."""
+    return _credit_score_analyzer(credit_score)
 
 
-# -------------------------
-# DTI CALCULATOR TOOL
-# -------------------------
 @tool
-def dti_calculator(income: float, emi: float) -> dict:
-    """
-    Calculate Debt-to-Income ratio.
-    """
-
-    dti = emi / income
-
-    if dti <= 0.3:
-        status = "LOW RISK"
-    elif dti <= 0.5:
-        status = "MEDIUM RISK"
-    else:
-        status = "HIGH RISK"
-
-    return {
-        "income": income,
-        "emi": emi,
-        "dti": round(dti, 2),
-        "status": status
-    }
+def dti_calculator(monthly_income: float, emi: float) -> dict:
+    """Calculate Debt-to-Income ratio and risk tier from monthly income and EMI."""
+    return _dti_calculator(monthly_income=monthly_income, emi=emi)
 
 
-# -------------------------
-# DOCUMENT VERIFICATION TOOL
-# -------------------------
 @tool
-def document_verification(document_type: str, document_number: str) -> dict:
-    """
-    Validate KYC / loan documents.
-    """
-
-    valid_docs = ["PAN", "AADHAAR", "ITR"]
-
-    if document_type.upper() in valid_docs:
-        status = "VALID"
-    else:
-        status = "INVALID"
-
-    return {
-        "document_type": document_type,
-        "document_number": document_number,
-        "verification_status": status
-    }
+def document_verification(pan: str, aadhaar: str) -> dict:
+    """Verify PAN and Aadhaar number formats for KYC."""
+    return _document_verification(pan=pan, aadhaar=aadhaar)

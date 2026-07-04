@@ -1,15 +1,18 @@
 # FILE: api/routes.py
 
-from fastapi import APIRouter, Query
-from pydantic import BaseModel
 import json
 
-from services.llm_service import ask_llm, run_tools
+from fastapi import APIRouter, Query
+from pydantic import BaseModel
+
+from core.chain import run_chain
 from memory.memory_store import MemoryStore
 from models.response_model import ChatResponse
+from utils.logger import get_logger
+
+logger = get_logger("api.routes")
 
 router = APIRouter()
-
 memory = MemoryStore(max_turns=10)
 
 
@@ -27,79 +30,24 @@ class ChatRequest(BaseModel):
 @router.post("/chat", response_model=ChatResponse)
 def chat(req: ChatRequest):
 
-    message = req.message.strip()
-    message_lower = message.lower()
-
-    # -------------------------
-    # GET HISTORY
-    # -------------------------
     history = memory.get(req.session_id)
 
-    context_text = ""
+    result = run_chain(req.message, history)
+    response = result["response"]
+    response_type = result["type"]
 
-    for h in history:
-        user_msg = h.get("user", "")
-        assistant_msg = h.get("assistant", "")
-        context_text += f"User: {user_msg}\nAssistant: {assistant_msg}\n"
-
-    # -------------------------
-    # TOOL ROUTE
-    # -------------------------
-    if (
-        "credit score" in message_lower
-        or "cibil" in message_lower
-        or "dti" in message_lower
-        or "emi" in message_lower
-        or "debt" in message_lower
-        or "document" in message_lower
-        or "pan" in message_lower
-        or "aadhaar" in message_lower
-        or "kyc" in message_lower
-    ):
-        response = run_tools(message)
-        response_type = "tool"
-
-    # -------------------------
-    # LLM ROUTE WITH CONTEXT
-    # -------------------------
-    else:
-
-        prompt = f"""
-You are a loan underwriting AI assistant.
-
-Use conversation history properly.
-
-Conversation:
-{context_text}
-
-User:
-{message}
-
-Answer clearly and simply.
-"""
-
-        response = ask_llm(prompt)
-        response_type = "llm"
-
-    # -------------------------
-    # SAVE MEMORY
-    # -------------------------
     memory.add(
         req.session_id,
-        message,
-        json.dumps({
-            "response": str(response),
-            "type": response_type
-        }, ensure_ascii=False)
+        req.message,
+        json.dumps({"response": str(response), "type": response_type}, ensure_ascii=False),
     )
 
-    # -------------------------
-    # RETURN
-    # -------------------------
+    logger.info("session_id=%s response_type=%s", req.session_id, response_type)
+
     return ChatResponse(
         response=response,
         session_id=req.session_id,
-        history=memory.get(req.session_id)
+        history=memory.get(req.session_id),
     )
 
 
@@ -110,10 +58,11 @@ Answer clearly and simply.
 def reset(session_id: str = Query(...)):
 
     memory.clear(session_id)
+    logger.info("Memory cleared for session_id=%s", session_id)
 
     return {
         "message": "memory cleared",
-        "session_id": session_id
+        "session_id": session_id,
     }
 
 
@@ -125,5 +74,5 @@ def health():
 
     return {
         "status": "healthy",
-        "service": "loan-underwriting-ai"
+        "service": "loan-underwriting-ai",
     }

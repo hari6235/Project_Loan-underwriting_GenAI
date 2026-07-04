@@ -1,73 +1,118 @@
-import os
+# FILE: core/chain.py
+
 import json
 
-from dotenv import load_dotenv
-
-from langchain_openai import ChatOpenAI
 from langchain_core.prompts import ChatPromptTemplate
+from tenacity import retry, stop_after_attempt, wait_exponential
 
-from vectorstore.example_store import search_examples
+from services.llm_service import get_llm
 from tools.router import tool_router
-load_dotenv()
+from vectorstore.example_store import search_examples
+from utils.logger import get_logger
 
-llm = ChatOpenAI(
-    model="gpt-4o-mini",
-    temperature=0.2,
-    api_key=os.getenv("OPENAI_API_KEY")
+logger = get_logger("core.chain")
+
+SYSTEM_PROMPT = (
+    "You are a Senior Loan Underwriting and Credit Risk Assistant for a bank. "
+    "Begin with a greeting and answer clearly and simply. If the user asks something outside banking, "
+    "loans, or credit risk, politely say you can only help with those topics.\n\n"
+    "IMPORTANT — data honesty rules:\n"
+    "1. You do NOT have access to a live applicant database, uploaded documents, or historical "
+    "default-rate datasets beyond what already appears in this conversation's tool results and history.\n"
+    "2. NEVER invent specific numbers, applicant records, document contents, or default rates that "
+    "were not explicitly provided in the conversation history or a tool result shown above.\n"
+    "3. If asked about a specific applicant/application ID and no matching data appears in this "
+    "conversation, say plainly that you don't have that record and ask the user to provide the details "
+    "directly (credit score, income, EMI, PAN/Aadhaar, etc.).\n"
+    "4. For general banking/regulatory/conceptual questions (e.g. regulatory guidelines, how a guarantor "
+    "affects risk, what documents are typically required, collateral options to reduce risk tier), you may "
+    "answer using general, well-established banking knowledge — but label it clearly as general guidance, "
+    "not a verified match to this bank's specific policy, and suggest the user confirm with the compliance "
+    "or credit team.\n"
+    "5. When asked to summarize or generate a memo, base it ONLY on the tool results and messages already "
+    "present in the conversation history — do not add figures that weren't stated.\n"
+    "6. If asked to review uploaded documents (e.g. bank statements) and none have actually been provided "
+    "in this conversation, say you don't currently have the document content and ask the user to paste "
+    "the relevant figures or confirm how the document was shared."
 )
 
 
-def safe_parse(response_text: str):
+def _format_history(history: list) -> str:
+    """`history` comes from MemoryStore.get(): a list of
+    {"user": ..., "assistant": ...} dicts, where "assistant" is a JSON string
+    (see api/routes.py's memory.add call). Unwrap it back to plain text
+    instead of feeding raw JSON into the prompt."""
+    lines = []
+    for turn in history:
+        user_msg = turn.get("user", "")
+        assistant_raw = turn.get("assistant", "")
+        try:
+            parsed = json.loads(assistant_raw)
+            assistant_msg = parsed.get("response", assistant_raw) if isinstance(parsed, dict) else assistant_raw
+        except (json.JSONDecodeError, TypeError):
+            assistant_msg = assistant_raw
+        lines.append(f"User: {user_msg}\nAssistant: {assistant_msg}")
+    return "\n".join(lines)
 
-    try:
-        return json.loads(response_text)
-    except:
 
-        return {
-            "category": "fallback",
-            "answer": response_text,
-            "confidence_score": 0.5,
-            "recommendation": "Generated fallback response"
-        }
+@retry(stop=stop_after_attempt(3), wait=wait_exponential(multiplier=1, min=1, max=8), reraise=True)
+def _invoke_llm(messages):
+    return get_llm().invoke(messages)
 
 
-def run_chain(user_input: str, memory: list):
+def run_chain(user_input: str, history: list) -> dict:
+    """
+    Single decision point for every /chat request:
+      1. Try the deterministic tool router (credit score / DTI / KYC / etc.),
+         passing conversation history so follow-up queries that reference
+         "this applicant" without repeating an ID can still resolve.
+      2. If no tool matches, fall back to the LLM with conversation history
+         and a retrieved few-shot example.
 
-    # 1. TOOL FIRST (IMPORTANT)
-    tool_result = tool_router(user_input)
+    Returns {"type": ..., "response": ...} — the same shape api/routes.py
+    already persists to memory and returns to the client.
+    """
+    user_input = user_input.strip()
+    if not user_input:
+        return {"type": "clarification", "response": "Please enter a question."}
 
-    if tool_result:
-        return {
-            "type": "tool_response",
-            "response": tool_result
-        }
+    # 1. TOOL FIRST (history passed in for follow-up / context resolution)
+    tool_result = tool_router(user_input, history)
+    if tool_result is not None:
+        logger.info("Routed to tool | input_preview=%.80s", user_input)
+        return {"type": "tool_response", "response": tool_result}
 
-    # 2. FALLBACK TO LLM
+    # 2. LLM FALLBACK (few-shot + history)
+    logger.info("Routed to LLM | input_preview=%.80s", user_input)
     example = search_examples(user_input)
+    history_text = _format_history(history)
 
-    history_text = "\n".join(
-        [f"{m['role']}: {m['message']}" for m in memory]
+    prompt = ChatPromptTemplate.from_messages(
+        [
+            ("system", SYSTEM_PROMPT),
+            ("user", "Conversation history:\n{history}"),
+            ("user", "Relevant example:\n{example}"),
+            ("user", "{input}"),
+        ]
+    )
+    messages = prompt.format_messages(
+        input=user_input,
+        history=history_text if history_text else "(none)",
+        example=str(example) if example else "(none)",
     )
 
-    prompt = ChatPromptTemplate.from_messages([
-        ("system",
-         "You are a Senior Loan Underwriting Assistant. Return JSON only."),
-        ("user", f"History:\n{history_text}"),
-        ("user", f"Examples:\n{example}"),
-        ("user", "{input}")
-    ])
-
-    messages = prompt.format_messages(input=user_input)
-
-    response = llm.invoke(messages)
+    try:
+        response = _invoke_llm(messages)
+    except Exception:
+        logger.exception("LLM invocation failed after retries.")
+        return {
+            "type": "error",
+            "response": "The assistant is temporarily unavailable. Please try again shortly.",
+        }
 
     try:
-        return {
-            "type": "llm_response",
-            "response": json.loads(response.content)
-        }
-    except:
-        return {
-            "type": "llm_response",
-            "response": response.content
-        }
+        parsed_response = json.loads(response.content)
+    except (json.JSONDecodeError, TypeError):
+        parsed_response = response.content
+
+    return {"type": "llm_response", "response": parsed_response}
