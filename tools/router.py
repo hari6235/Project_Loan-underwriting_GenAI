@@ -23,10 +23,17 @@ from tools.parse_values import (
 )
 from tools.id_extractor import extract_all_applicant_ids
 from tools.context_resolver import resolve_applicant
+from tools.rag_tool import knowledge_retrieval
 from data.applicant_store import get_applicant
 from utils.logger import get_logger
 
 logger = get_logger("tools.router")
+
+KNOWLEDGE_KEYWORDS = [
+    "policy", "circular", "rbi", "regulation", "regulatory", "clause",
+    "fair practices", "prior case", "past case", "similar profile",
+    "memo", "guideline", "master circular", "ltv",
+]
 
 
 def tool_router(query: str, history: list = None):
@@ -240,5 +247,10 @@ def tool_router(query: str, history: list = None):
             }
         logger.info("Routing to document_verification(pan=%s, aadhaar=%s)", pan, aadhaar)
         return document_verification(pan=pan, aadhaar=aadhaar)
+
+    # -------------------- KNOWLEDGE RETRIEVAL (POLICY / REGULATORY / RAG) --------------------
+    if any(kw in query_lower for kw in KNOWLEDGE_KEYWORDS):
+        logger.info("Routing to knowledge_retrieval (RAG) for query: %.60s", query)
+        return knowledge_retrieval(query)
 
     return None

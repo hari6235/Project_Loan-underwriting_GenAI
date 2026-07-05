@@ -2,6 +2,8 @@
 
 A LangChain-powered AI assistant for banking operations. This project helps with loan underwriting, credit risk assessment, and KYC document verification using a conversational AI interface.
 
+The current implementation includes a FastAPI backend, a Streamlit frontend, tool-based underwriting workflows, and optional support for OpenAI or Anthropic providers. For the best VS Code experience, point the workspace interpreter to the project's virtual environment at `venv/bin/python` and reload the window if import diagnostics persist.
+
 ---
 
 ## 🎯 Features
@@ -42,23 +44,31 @@ A LangChain-powered AI assistant for banking operations. This project helps with
 │   ├── few_shots.yaml            # Few-shot examples
 │   ├── system_prompt.yaml        # System instructions
 │   └── underwriting_prompt.yaml  # Underwriting-specific prompts
+├── rag/                          # Retrieval and reranking components
+│   ├── embeddings.py             # Embedding provider adapter
+│   ├── reranker.py               # Reranking logic
+│   └── vectorstores/            # FAISS-backed vectorstores
 ├── services/                     # Business logic
 │   └── llm_service.py            # LLM calls & tool routing
 ├── tools/                        # Domain-specific tools
+│   ├── advanced_tools.py         # Additional helper tools
 │   ├── credit_score_tool.py      # Credit analysis tool
 │   ├── dti_tool.py               # DTI ratio calculator
 │   ├── document_tool.py          # Document verification
 │   ├── langchain_tools.py        # LangChain tool wrappers
-    ├── parse_values.py           # Tool parsing logic
+│   ├── parse_values.py           # Tool parsing logic
 │   ├── router.py                 # Tool routing logic
+│   ├── rag_tool.py               # Retrieval-augmented generation tool
 │   └── tool_registry.py          # Tool registry
 ├── vectorstore/                  # Vector search & embeddings
 │   └── example_store.py          # FAISS vector store
+├── eval/                         # Evaluation utilities and reports
 ├── logs/                         # Application logs
 │   └── interactions.log          # Interaction logs
 ├── memory.db                     # SQLite conversation database
 ├── requirements.txt              # Python dependencies
 ├── .env                          # Environment variables
+├── .vscode/                      # VS Code workspace settings
 └── .gitignore                    # Git ignore rules
 ```
 
@@ -67,8 +77,9 @@ A LangChain-powered AI assistant for banking operations. This project helps with
 ## 🚀 Quick Start
 
 ### Prerequisites
-- Python 3.8+
-- OpenAI API key
+- Python 3.10+
+- OpenAI API key (or Anthropic API key for alternate provider support)
+- A working internet connection for the LLM API calls
 
 ### Installation
 
@@ -90,10 +101,14 @@ pip install -r requirements.txt
 ```
 
 4. **Set up environment**
+Create a `.env` file in the project root and add at least:
 ```bash
-cp .env.example .env  # if available, or create manually
-echo "OPENAI_API_KEY=your-api-key-here" >> .env
+OPENAI_API_KEY=your-openai-key-here
+# Optional for Anthropic support
+ANTHROPIC_API_KEY=your-anthropic-key-here
 ```
+
+If VS Code shows import errors, select the interpreter at `venv/bin/python` and reload the window.
 
 5. **Run the application**
 

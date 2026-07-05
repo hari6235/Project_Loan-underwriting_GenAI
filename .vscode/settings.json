@@ -1,0 +1,6 @@
+{
+  "python.defaultInterpreterPath": "/home/kasm-user/Documents/loan-underwriting-credit-risk-assistant/venv/bin/python",
+  "python.analysis.extraPaths": [
+    "./"
+  ]
+}

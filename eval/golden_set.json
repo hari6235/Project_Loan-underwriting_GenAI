@@ -1,0 +1,23 @@
+[
+  {
+    "query": "What is the maximum LTV ratio for a home loan above 75L per our internal credit policy?",
+    "expected_answer": "As per policy, LTV for home loans above 75L is capped at 75%.",
+    "expected_chunk_ids": ["credit_policy_manual_12"],
+    "category": "policy_lookup",
+    "difficulty": "easy"
+  },
+  {
+    "query": "What does the RBI Master Circular say about classifying restructured loans?",
+    "expected_answer": "Restructured loans must be classified as per RBI's asset classification norms with a standstill clause during the review period.",
+    "expected_chunk_ids": ["rbi_circular_07"],
+    "category": "regulatory",
+    "difficulty": "medium"
+  },
+  {
+    "query": "What's our policy on accepting cryptocurrency holdings as collateral?",
+    "expected_answer": "Not covered in the indexed policy documents - should be a refusal.",
+    "expected_chunk_ids": [],
+    "category": "refusal_test",
+    "difficulty": "hard"
+  }
+]

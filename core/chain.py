@@ -63,14 +63,15 @@ def _invoke_llm(messages):
 def run_chain(user_input: str, history: list) -> dict:
     """
     Single decision point for every /chat request:
-      1. Try the deterministic tool router (credit score / DTI / KYC / etc.),
+      1. Try the deterministic tool router (credit score / DTI / KYC / RAG / etc.),
          passing conversation history so follow-up queries that reference
          "this applicant" without repeating an ID can still resolve.
       2. If no tool matches, fall back to the LLM with conversation history
          and a retrieved few-shot example.
 
     Returns {"type": ..., "response": ...} — the same shape api/routes.py
-    already persists to memory and returns to the client.
+    already persists to memory and returns to the client. When the RAG tool
+    fires, the return dict also carries a top-level "citations" list.
     """
     user_input = user_input.strip()
     if not user_input:
@@ -80,6 +81,20 @@ def run_chain(user_input: str, history: list) -> dict:
     tool_result = tool_router(user_input, history)
     if tool_result is not None:
         logger.info("Routed to tool | input_preview=%.80s", user_input)
+
+        # RAG responses carry their own type + citations one level down
+        # (see tools/rag_tool.py). Unwrap them to the top level here so
+        # api/routes.py can read result["type"] == "rag_response" and
+        # result["citations"] directly, instead of them being buried inside
+        # the generic {"type": "tool_response", "response": ...} envelope
+        # that every other (non-RAG) tool result still uses unchanged.
+        if isinstance(tool_result, dict) and tool_result.get("type") == "rag_response":
+            return {
+                "type": "rag_response",
+                "response": tool_result.get("response"),
+                "citations": tool_result.get("citations", []),
+            }
+
         return {"type": "tool_response", "response": tool_result}
 
     # 2. LLM FALLBACK (few-shot + history)

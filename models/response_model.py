@@ -1,3 +1,4 @@
+# FILE: models/response_model.py
 from typing import Any, List, Optional
 from pydantic import BaseModel
 
@@ -9,6 +10,14 @@ class BankingResponse(BaseModel):
     recommendation: str
 
 
+class Citation(BaseModel):
+    chunk_id: Optional[str] = None
+    doc_name: Optional[str] = None
+    page: Optional[int] = None
+    score: Optional[float] = None
+    text: str
+
+
 # -------------------------
 # API response schema for /chat endpoint
 # -------------------------
@@ -16,3 +25,5 @@ class ChatResponse(BaseModel):
     response: Any
     session_id: str
     history: Optional[List[Any]] = []
+    type: Optional[str] = None
+    citations: Optional[List[Citation]] = None
