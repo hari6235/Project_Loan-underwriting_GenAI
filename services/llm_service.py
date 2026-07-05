@@ -1,12 +1,16 @@
 # FILE: services/llm_service.py
 import os
+from pathlib import Path
 from typing import Optional
+
 from dotenv import load_dotenv
+
+load_dotenv(dotenv_path=Path(__file__).resolve().parents[1] / ".env")
+
 from langchain_openai import ChatOpenAI
 from tenacity import retry, stop_after_attempt, wait_exponential
 from utils.logger import get_logger
 
-load_dotenv()
 logger = get_logger("services.llm_service")
 
 LLM_MODEL = os.getenv("LLM_MODEL", "gpt-4o-mini")

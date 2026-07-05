@@ -12,9 +12,18 @@ The current implementation includes a FastAPI backend, a Streamlit frontend, too
 - **Loan Risk Assessment** - Analyzes credit scores and applicant risk profiles
 - **DTI Calculation** - Computes debt-to-income ratios for loan eligibility
 - **Document Verification** - Validates KYC documents (PAN, Aadhaar, etc.)
+- **Document Upload Support** - Users can upload sample documents and ask relevant questions in the chatbot for contextual analysis
 - **Security First** - PII detection and prompt injection prevention built-in
 - **Easy to Use** - Streamlit frontend with intuitive chat interface
 - **Production Ready** - FastAPI backend with proper error handling
+
+---
+
+## 🆕 Recent Updates
+
+- Added document upload support so users can upload sample documents and ask contextual questions inside the chatbot.
+- Refined the runtime setup so the app loads environment-based LangChain configuration more reliably.
+- Verified the current project state with successful import and backend startup checks.
 
 ---
 
@@ -125,6 +134,9 @@ streamlit run app.py
 ```
 
 The Streamlit app will open at `http://localhost:8501`
+
+### Document Upload Workflow
+Users can upload sample supporting documents through the chatbot interface and ask context-aware questions related to those documents. This enables more intelligent downstream analysis for underwriting, document review, and eligibility discussions.
 
 ---
 

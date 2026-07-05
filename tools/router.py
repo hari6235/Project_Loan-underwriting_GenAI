@@ -29,16 +29,35 @@ from utils.logger import get_logger
 
 logger = get_logger("tools.router")
 
+# Strong, RAG-only signals: phrases that indicate a document/policy/past-case
+# lookup and essentially never appear in a genuine calculation request. These
+# are checked BEFORE any deterministic branch, so a query like "find prior
+# underwriting memos where co-applicant income brought DTI below threshold"
+# routes to RAG instead of being intercepted by the DTI branch just because
+# it happens to mention "DTI".
+STRONG_KNOWLEDGE_SIGNALS = [
+    "prior case", "past case", "similar profile", "prior underwriting",
+    "memo", "memos", "master circular", "fair practices",
+]
+
+# Softer signals: still checked, but only as a fallback if nothing else
+# matched -- these CAN legitimately co-occur with a tool query (e.g. "as per
+# current underwriting policy" alongside a DTI/credit-score ask), so they
+# stay last instead of pre-empting deterministic branches.
 KNOWLEDGE_KEYWORDS = [
     "policy", "circular", "rbi", "regulation", "regulatory", "clause",
-    "fair practices", "prior case", "past case", "similar profile",
-    "memo", "guideline", "master circular", "ltv",
+    "guideline", "ltv",
 ]
 
 
 def tool_router(query: str, history: list = None):
     query_lower = query.lower()
     history = history or []
+
+    # -------------------- KNOWLEDGE RETRIEVAL (STRONG SIGNALS FIRST) --------------------
+    if any(sig in query_lower for sig in STRONG_KNOWLEDGE_SIGNALS):
+        logger.info("Routing to knowledge_retrieval (strong signal) for query: %.60s", query)
+        return knowledge_retrieval(query)
 
     # -------------------- COMPARE APPLICANTS --------------------
     if "compare" in query_lower and ("applicant" in query_lower or "risk profile" in query_lower):
@@ -248,9 +267,9 @@ def tool_router(query: str, history: list = None):
         logger.info("Routing to document_verification(pan=%s, aadhaar=%s)", pan, aadhaar)
         return document_verification(pan=pan, aadhaar=aadhaar)
 
-    # -------------------- KNOWLEDGE RETRIEVAL (POLICY / REGULATORY / RAG) --------------------
+    # -------------------- KNOWLEDGE RETRIEVAL (SOFTER SIGNALS, FALLBACK) --------------------
     if any(kw in query_lower for kw in KNOWLEDGE_KEYWORDS):
-        logger.info("Routing to knowledge_retrieval (RAG) for query: %.60s", query)
+        logger.info("Routing to knowledge_retrieval (soft signal, fallback) for query: %.60s", query)
         return knowledge_retrieval(query)
 
     return None

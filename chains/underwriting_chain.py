@@ -1,8 +1,13 @@
+import os
+from pathlib import Path
+
+from dotenv import load_dotenv
+
+load_dotenv(dotenv_path=Path(__file__).resolve().parents[1] / ".env")
+
 from langchain_openai import ChatOpenAI
 from langchain_core.prompts import ChatPromptTemplate
 from vectorstore.example_store import search_examples
-
-import os
 
 llm = ChatOpenAI(
     model="gpt-4o-mini",

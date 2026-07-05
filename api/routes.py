@@ -85,6 +85,12 @@ def health():
 _jobs: dict = {}  # in-memory job tracker; fine for a single-process dev setup
 
 
+def _existing_source_names() -> set:
+    if not vector_store.index:
+        return set()
+    return {d.metadata.get("source") for d in vector_store.index.docstore._dict.values()}
+
+
 @router.post("/ingest")
 async def ingest(file: UploadFile = File(...)):
     job_id = str(uuid.uuid4())
@@ -96,13 +102,30 @@ async def ingest(file: UploadFile = File(...)):
         f.write(await file.read())
 
     try:
+        # Same filename already indexed -> treat this as a document UPDATE,
+        # not a duplicate. Remove the old chunks first so re-ingesting a
+        # revised policy doesn't leave stale clauses alongside the new ones
+        # (see "Stale vector index" pitfall in the project spec).
+        replaced = False
+        if file.filename in _existing_source_names():
+            vector_store.delete(file.filename)
+            replaced = True
+            logger.info("Ingest job=%s: existing source '%s' found, replacing", job_id, file.filename)
+
         docs = load_document(path)
         chunks = chunk_documents(docs, strategy=os.getenv("CHUNK_STRATEGY", "recursive"))
         vector_store.add(chunks, embedder)
         vector_store.persist()
-        refresh_bm25()  # keep the sparse retriever in sync with the newly ingested chunks
-        _jobs[job_id] = {"status": "completed", "progress": 100, "chunks": len(chunks)}
-        logger.info("Ingest job=%s completed: %d chunks from %s", job_id, len(chunks), file.filename)
+        refresh_bm25()  # keep the sparse retriever in sync with the ingested/replaced chunks
+
+        _jobs[job_id] = {
+            "status": "completed",
+            "progress": 100,
+            "chunks": len(chunks),
+            "replaced_existing": replaced,
+        }
+        action = "Re-ingested (replaced existing)" if replaced else "Ingested"
+        logger.info("Ingest job=%s completed: %s %d chunks from %s", job_id, action, len(chunks), file.filename)
     except Exception as e:
         _jobs[job_id] = {"status": "failed", "error": str(e)}
         logger.exception("Ingest job=%s failed", job_id)
