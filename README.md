@@ -372,11 +372,21 @@ Test queries covering different scenarios:
 - Consider adding response caching (in progress)
 
 ---
+## � LangSmith Tracing
+
+LangSmith integration is **active** and fully operational. All LLM invocations, token usage, latency, and costs are tracked in real-time.
+
+**Evidence**: See [docs/LANGSMITH_INTEGRATION.md](docs/LANGSMITH_INTEGRATION.md) for screenshots, configuration details, and monitoring instructions.
+
+**Project Dashboard**: https://smith.langchain.com → Project: `hari_loan_underwriting_chatbot_tracing`
+
+---
+
 ## 🚧 Roadmap
 
 Planned improvements:
+- [x] Integrate LangSmith for tracing
 - [ ] Add retry logic with exponential backoff
-- [ ] Integrate LangSmith for tracing
 - [ ] Add in-memory caching layer
 - [ ] Redis support for distributed sessions
 - [ ] Enhanced error handling

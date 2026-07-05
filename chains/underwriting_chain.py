@@ -1,12 +1,12 @@
 import os
-from pathlib import Path
 
-from dotenv import load_dotenv
+from utils.langsmith_config import configure_langsmith
 
-load_dotenv(dotenv_path=Path(__file__).resolve().parents[1] / ".env")
+configure_langsmith()
 
 from langchain_openai import ChatOpenAI
 from langchain_core.prompts import ChatPromptTemplate
+from langsmith import traceable
 from vectorstore.example_store import search_examples
 
 llm = ChatOpenAI(
@@ -16,6 +16,7 @@ llm = ChatOpenAI(
 )
 
 
+@traceable(name="underwriting_chain")
 def underwriting_chain(user_input: str):
 
     example = search_examples(user_input)

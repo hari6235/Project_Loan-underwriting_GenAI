@@ -1,11 +1,10 @@
 # FILE: services/llm_service.py
 import os
-from pathlib import Path
 from typing import Optional
 
-from dotenv import load_dotenv
+from utils.langsmith_config import configure_langsmith
 
-load_dotenv(dotenv_path=Path(__file__).resolve().parents[1] / ".env")
+configure_langsmith()
 
 from langchain_openai import ChatOpenAI
 from tenacity import retry, stop_after_attempt, wait_exponential
