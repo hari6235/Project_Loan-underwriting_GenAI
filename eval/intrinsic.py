@@ -15,7 +15,7 @@ def mrr(retrieved_ids: list[str], expected_ids: list[str]) -> float:
 def run_intrinsic(golden_set: list[dict], retrieve_fn) -> dict:
     hits, mrrs = [], []
     for item in golden_set:
-        retrieved = retrieve_fn(item["query"])
+        retrieved = retrieve_fn(item["query"], item.get("history", []))
         ids = [r["metadata"].get("chunk_id") for r in retrieved]
         hits.append(hit_at_k(ids, item["expected_chunk_ids"]))
         mrrs.append(mrr(ids, item["expected_chunk_ids"]))

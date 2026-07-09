@@ -8,15 +8,21 @@ from tools.rag_tool import knowledge_retrieval
 from rag.state import embedder, vector_store, bm25_retriever
 from rag.retriever_hybrid import hybrid_search
 from rag.reranker import rerank
+from rag.contextualizer import contextualize_query
 
 
-def retrieve_fn(query):
-    candidates = hybrid_search(query, vector_store, bm25_retriever, embedder, k=10)
-    return rerank(query, candidates, top_k=5)
+def retrieve_fn(query, history=None):
+    """Mirrors tools/rag_tool.py's retrieval path, including query
+    contextualization. Without this, intrinsic metrics (Hit@K/MRR) would
+    score multi-turn golden-set items against the raw, un-contextualized
+    fragment instead of what /chat actually retrieves for a follow-up."""
+    standalone_query = contextualize_query(query, history or [])
+    candidates = hybrid_search(standalone_query, vector_store, bm25_retriever, embedder, k=10)
+    return rerank(standalone_query, candidates, top_k=5)
 
 
-def answer_fn(query):
-    return knowledge_retrieval(query)
+def answer_fn(query, history=None):
+    return knowledge_retrieval(query, history=history or [])
 
 
 def run_full_eval():

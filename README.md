@@ -21,9 +21,10 @@ The current implementation includes a FastAPI backend, a Streamlit frontend, too
 
 ## 🆕 Recent Updates
 
-- Added document upload support so users can upload sample documents and ask contextual questions inside the chatbot.
-- Refined the runtime setup so the app loads environment-based LangChain configuration more reliably.
-- Verified the current project state with successful import and backend startup checks.
+- Added a document management workflow so users can upload PDFs, DOCX, HTML, TXT, and CSV files from the Streamlit UI and index them into the RAG knowledge base.
+- Added backend support for ingestion progress checks, source listing, source deletion, and retrieval-based document search.
+- Improved runtime setup so LangSmith and OpenAI configuration load reliably from the project environment.
+- Added guardrails for PII detection, prompt injection prevention, and banking-topic filtering.
 
 ---
 
@@ -87,7 +88,7 @@ The current implementation includes a FastAPI backend, a Streamlit frontend, too
 
 ### Prerequisites
 - Python 3.10+
-- OpenAI API key (or Anthropic API key for alternate provider support)
+- An OpenAI API key
 - A working internet connection for the LLM API calls
 
 ### Installation
@@ -98,7 +99,7 @@ git clone https://github.com/hari6235/Project_Loan-underwriting_GenAI.git
 cd Project_Loan-underwriting_GenAI
 ```
 
-2. **Create virtual environment**
+2. **Create and activate a virtual environment**
 ```bash
 python -m venv venv
 source venv/bin/activate  # On Windows: venv\Scripts\activate
@@ -109,12 +110,16 @@ source venv/bin/activate  # On Windows: venv\Scripts\activate
 pip install -r requirements.txt
 ```
 
-4. **Set up environment**
+4. **Set up environment variables**
 Create a `.env` file in the project root and add at least:
 ```bash
 OPENAI_API_KEY=your-openai-key-here
-# Optional for Anthropic support
-ANTHROPIC_API_KEY=your-anthropic-key-here
+LLM_MODEL=gpt-4o-mini
+LLM_TEMPERATURE=0.2
+
+# Optional LangSmith tracing
+LANGCHAIN_API_KEY=your-langsmith-key-here
+LANGCHAIN_PROJECT=hari_loan_underwriting_chatbot_tracing
 ```
 
 If VS Code shows import errors, select the interpreter at `venv/bin/python` and reload the window.
@@ -125,7 +130,7 @@ Open two terminal windows:
 
 **Terminal 1 - Backend API**
 ```bash
-uvicorn api.main:app --reload --port 8000
+uvicorn api.main:app --reload --host 0.0.0.0 --port 8000
 ```
 
 **Terminal 2 - Frontend UI**
@@ -133,17 +138,17 @@ uvicorn api.main:app --reload --port 8000
 streamlit run app.py
 ```
 
-The Streamlit app will open at `http://localhost:8501`
+The Streamlit app will open at `http://localhost:8501`.
 
 ### Document Upload Workflow
-Users can upload sample supporting documents through the chatbot interface and ask context-aware questions related to those documents. This enables more intelligent downstream analysis for underwriting, document review, and eligibility discussions.
+Users can upload supporting documents from the Streamlit UI, ingest them into the vector store, and ask context-aware questions about those documents. This improves underwriting analysis, document review, and policy-based Q&A.
 
 ---
 
 ## 📡 API Endpoints
 
 ### POST /chat
-Process a user message and get an AI response.
+Process a user message and return the AI response, along with tool output and citations when RAG is used.
 
 **Request:**
 ```json
@@ -153,54 +158,41 @@ Process a user message and get an AI response.
 }
 ```
 
-**Response:**
-```json
-{
-  "response": {
-    "type": "tool_response",
-    "response": {
-      "credit_score": 720,
-      "category": "GOOD",
-      "risk_level": "MEDIUM",
-      "approval_probability": "80%"
-    }
-  },
-  "session_id": "user1",
-  "history": [...]
-}
-```
-
 ### POST /reset
 Clear conversation memory for a session.
 
-**Request:**
 ```bash
 curl -X POST "http://localhost:8000/reset?session_id=user1"
 ```
 
-**Response:**
-```json
-{
-  "message": "memory cleared",
-  "session_id": "user1"
-}
-```
-
 ### GET /health
-Check API health status.
+Check API health and vector-store status.
 
-**Request:**
 ```bash
 curl http://localhost:8000/health
 ```
 
-**Response:**
-```json
-{
-  "status": "healthy",
-  "service": "loan-underwriting-ai"
-}
+### POST /ingest
+Upload a document for indexing into the knowledge base.
+
+```bash
+curl -X POST "http://localhost:8000/ingest" -F "file=@policy.pdf"
 ```
+
+### GET /ingest/status/{job_id}
+Check the progress of an ingestion job.
+
+### POST /retrieve
+Run a retrieval-only search against the indexed document chunks.
+
+### GET /sources
+List currently indexed sources and chunk counts.
+
+### DELETE /sources/{doc_id}
+Delete an indexed document source and refresh the retriever.
+
+### POST /evaluate
+Run the evaluation pipeline for the assistant.
 
 ---
 

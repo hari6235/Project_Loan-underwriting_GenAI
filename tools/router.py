@@ -24,6 +24,7 @@ from tools.parse_values import (
 from tools.id_extractor import extract_all_applicant_ids
 from tools.context_resolver import resolve_applicant
 from tools.rag_tool import knowledge_retrieval
+from rag.contextualizer import contextualize_query
 from data.applicant_store import get_applicant
 from utils.logger import get_logger
 
@@ -57,7 +58,7 @@ def tool_router(query: str, history: list = None):
     # -------------------- KNOWLEDGE RETRIEVAL (STRONG SIGNALS FIRST) --------------------
     if any(sig in query_lower for sig in STRONG_KNOWLEDGE_SIGNALS):
         logger.info("Routing to knowledge_retrieval (strong signal) for query: %.60s", query)
-        return knowledge_retrieval(query)
+        return knowledge_retrieval(query, history=history)
 
     # -------------------- COMPARE APPLICANTS --------------------
     if "compare" in query_lower and ("applicant" in query_lower or "risk profile" in query_lower):
@@ -270,6 +271,31 @@ def tool_router(query: str, history: list = None):
     # -------------------- KNOWLEDGE RETRIEVAL (SOFTER SIGNALS, FALLBACK) --------------------
     if any(kw in query_lower for kw in KNOWLEDGE_KEYWORDS):
         logger.info("Routing to knowledge_retrieval (soft signal, fallback) for query: %.60s", query)
-        return knowledge_retrieval(query)
+        return knowledge_retrieval(query, history=history)
+
+    # -------------------- KNOWLEDGE RETRIEVAL (CONTEXTUAL FALLBACK) --------------------
+    # Nothing matched on the RAW follow-up text. This is the elliptical-query
+    # gap: something like "What about for a loan against property instead?"
+    # contains none of STRONG_KNOWLEDGE_SIGNALS/KNOWLEDGE_KEYWORDS on its own
+    # -- even though, resolved against the prior turn, it's clearly a policy
+    # lookup -- so every branch above (including the soft-signal check just
+    # above) misses it and this would otherwise fall through to the generic
+    # LLM with no retrieval/citations at all.
+    #
+    # Only reached here (after every deterministic branch already had first
+    # crack at the RAW query), and only re-checks the knowledge-retrieval
+    # signals -- not the full deterministic cascade -- so a rewritten query
+    # can't accidentally misfire a numeric/ID-based tool branch instead.
+    if history:
+        standalone_query = contextualize_query(query, history)
+        if standalone_query.lower() != query_lower:
+            standalone_lower = standalone_query.lower()
+            if any(sig in standalone_lower for sig in STRONG_KNOWLEDGE_SIGNALS) or \
+               any(kw in standalone_lower for kw in KNOWLEDGE_KEYWORDS):
+                logger.info(
+                    "Routing to knowledge_retrieval (contextual fallback) | original=%.60s | standalone=%.60s",
+                    query, standalone_query,
+                )
+                return knowledge_retrieval(standalone_query, history=history)
 
     return None

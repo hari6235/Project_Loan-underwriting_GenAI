@@ -2,14 +2,18 @@
   {
     "query": "What is the maximum LTV ratio for a home loan above 75L per our internal credit policy?",
     "expected_answer": "As per policy, LTV for home loans above 75L is capped at 75%.",
-    "expected_chunk_ids": ["credit_policy_manual_12"],
+    "expected_chunk_ids": [
+      "credit_policy_manual_12"
+    ],
     "category": "policy_lookup",
     "difficulty": "easy"
   },
   {
     "query": "What does the RBI Master Circular say about classifying restructured loans?",
     "expected_answer": "Restructured loans must be classified as per RBI's asset classification norms with a standstill clause during the review period.",
-    "expected_chunk_ids": ["rbi_circular_07"],
+    "expected_chunk_ids": [
+      "rbi_circular_07"
+    ],
     "category": "regulatory",
     "difficulty": "medium"
   },
@@ -19,5 +23,67 @@
     "expected_chunk_ids": [],
     "category": "refusal_test",
     "difficulty": "hard"
+  },
+  {
+    "query": "What about for a loan against property instead?",
+    "history": [
+      {
+        "user": "What is the maximum LTV ratio for a home loan above 75L per our internal credit policy?",
+        "assistant": "{\"response\": \"As per policy, LTV for home loans above 75L is capped at 75%. [chunk_id: credit_policy_manual_12]\", \"type\": \"rag_response\"}"
+      }
+    ],
+    "expected_answer": "As per policy, LTV for loan against property (LAP) is capped at 65%.",
+    "expected_chunk_ids": [
+      "credit_policy_manual_15"
+    ],
+    "category": "multi_turn_policy_lookup",
+    "difficulty": "medium",
+    "note": "Elliptical follow-up ('for a loan against property instead') is only resolvable using the prior turn -- tests that the RAG tool contextualizes before retrieval, not just the isolated fragment."
+  },
+  {
+    "query": "And how long does that standstill period last?",
+    "history": [
+      {
+        "user": "What does the RBI Master Circular say about classifying restructured loans?",
+        "assistant": "{\"response\": \"Restructured loans must be classified as per RBI's asset classification norms with a standstill clause during the review period. [chunk_id: rbi_circular_07]\", \"type\": \"rag_response\"}"
+      }
+    ],
+    "expected_answer": "The standstill clause applies for the review period defined in the RBI Master Circular, during which the asset classification is held rather than downgraded.",
+    "expected_chunk_ids": [
+      "rbi_circular_08"
+    ],
+    "category": "multi_turn_regulatory",
+    "difficulty": "medium",
+    "note": "'that standstill period' has no antecedent without the prior turn -- tests pronoun/reference resolution on a regulatory follow-up."
+  },
+  {
+    "query": "What if the exception is only ₹80 lakh?",
+    "history": [
+      {
+        "user": "What is the escalation path for an underwriting exception above ₹2 Cr?",
+        "assistant": "{\"response\": \"Exceptions above ₹2 Cr require Regional Credit Committee sign-off, escalating to the Head Office Credit Committee above ₹5 Cr. [chunk_id: credit_policy_manual_22]\", \"type\": \"rag_response\"}"
+      }
+    ],
+    "expected_answer": "For exceptions below ₹2 Cr, branch-level credit committee sign-off is sufficient per policy; regional escalation is not required.",
+    "expected_chunk_ids": [
+      "credit_policy_manual_21"
+    ],
+    "category": "multi_turn_numeric_threshold",
+    "difficulty": "hard",
+    "note": "Tests that a changed numeric threshold in a follow-up gets treated as a NEW policy lookup (different escalation tier), not just answered by re-stating the previous turn's figures."
+  },
+  {
+    "query": "What about NFTs then?",
+    "history": [
+      {
+        "user": "What's our policy on accepting cryptocurrency holdings as collateral?",
+        "assistant": "{\"response\": \"I don't have this information in the indexed documents.\", \"type\": \"rag_response\"}"
+      }
+    ],
+    "expected_answer": "Not covered in the indexed policy documents - should be a refusal.",
+    "expected_chunk_ids": [],
+    "category": "multi_turn_refusal",
+    "difficulty": "hard",
+    "note": "Regression guard: contextualizing a follow-up must not cause the model to hallucinate an answer for something equally out-of-corpus (NFTs) just because it now 'sounds' more specific/standalone."
   }
 ]

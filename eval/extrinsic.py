@@ -8,7 +8,7 @@ from datasets import Dataset
 def run_extrinsic(golden_set: list[dict], answer_fn) -> dict:
     rows = []
     for item in golden_set:
-        result = answer_fn(item["query"])
+        result = answer_fn(item["query"], item.get("history", []))
         rows.append({
             "question": item["query"],
             "answer": result["response"],

@@ -22,7 +22,7 @@ def judge(question: str, answer: str, expected: str) -> dict:
 def run_llm_judge(golden_set: list[dict], answer_fn) -> dict:
     scores = {"correctness": [], "completeness": [], "citation_quality": [], "clarity": []}
     for item in golden_set:
-        result = answer_fn(item["query"])
+        result = answer_fn(item["query"], item.get("history", []))
         s = judge(item["query"], result["response"], item["expected_answer"])
         for k in scores:
             scores[k].append(s[k])
