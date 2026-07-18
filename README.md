@@ -1,402 +1,126 @@
 # Loan Underwriting & Credit Risk Assistant
 
-A LangChain-powered AI assistant for banking operations. This project helps with loan underwriting, credit risk assessment, and KYC document verification using a conversational AI interface.
+This repository contains a LangChain-based assistant for loan underwriting and credit-risk support. The current implementation combines a FastAPI backend, a Streamlit frontend, retrieval-augmented generation (RAG) over uploaded banking documents, deterministic underwriting tools, MCP-backed tools, human-in-the-loop approval workflows, RBAC, and automated evaluation.
 
-The current implementation includes a FastAPI backend, a Streamlit frontend, tool-based underwriting workflows, and optional support for OpenAI or Anthropic providers. For the best VS Code experience, point the workspace interpreter to the project's virtual environment at `venv/bin/python` and reload the window if import diagnostics persist.
+## What is included in the current build
 
----
+- A production-style FastAPI service with chat, health, ingest, retrieval, HITL, prompt-management, RBAC, and evaluation endpoints
+- A Streamlit UI with separate tabs for chat, document management, HITL approvals, prompt versioning, MCP tools, and eval dashboards
+- RAG over uploaded documents (PDF, DOCX, HTML, TXT, CSV) with chunking, embedding, BM25/hybrid retrieval, and reranking
+- Guardrails for PII detection, prompt injection prevention, and banking-topic filtering
+- Human-in-the-loop review for high-risk or policy-sensitive actions
+- Role-based access control with audit logging and segregation-of-duties checks
+- Prompt versioning and rollback from the UI
+- LangSmith tracing and evaluation support via regression, drift, and dashboard workflows
 
-## 🎯 Features
+## Project layout
 
-- **Multi-turn Conversations** - Maintains context across 10 conversation turns
-- **Loan Risk Assessment** - Analyzes credit scores and applicant risk profiles
-- **DTI Calculation** - Computes debt-to-income ratios for loan eligibility
-- **Document Verification** - Validates KYC documents (PAN, Aadhaar, etc.)
-- **Document Upload Support** - Users can upload sample documents and ask relevant questions in the chatbot for contextual analysis
-- **Security First** - PII detection and prompt injection prevention built-in
-- **Easy to Use** - Streamlit frontend with intuitive chat interface
-- **Production Ready** - FastAPI backend with proper error handling
-
----
-
-## 🆕 Recent Updates
-
-- Added a document management workflow so users can upload PDFs, DOCX, HTML, TXT, and CSV files from the Streamlit UI and index them into the RAG knowledge base.
-- Added backend support for ingestion progress checks, source listing, source deletion, and retrieval-based document search.
-- Improved runtime setup so LangSmith and OpenAI configuration load reliably from the project environment.
-- Added guardrails for PII detection, prompt injection prevention, and banking-topic filtering.
-
----
-
-## 📁 Project Structure
-
-```
-.
-├── api/                          # FastAPI backend
-│   ├── main.py                   # FastAPI app setup & endpoints
-│   └── routes.py                 # Chat & reset routes
-├── app.py                        # Streamlit frontend
-├── chains/                       # LangChain workflows
-│   └── underwriting_chain.py     # Loan underwriting chain
-├── core/                         # Core utilities
-│   └── chain.py                  # Chain orchestration
-├── guardrails/                   # Input validation & security
-│   ├── pii_detector.py           # Detects PII (Aadhaar, PAN, Phone)
-│   ├── prompt_injection.py       # Blocks injection attempts
-│   └── topic_filter.py           # Ensures banking-related queries
-├── memory/                       # Conversation memory
-│   └── memory_store.py           # SQLite-based conversation storage
-├── models/                       # Data validation schemas
-│   ├── response_model.py         # Pydantic response models
-│   └── risk_model.py             # Risk assessment models
-├── prompts/                      # LLM prompts & examples
-│   ├── templates.py              # Prompt templates
-│   ├── few_shots.yaml            # Few-shot examples
-│   ├── system_prompt.yaml        # System instructions
-│   └── underwriting_prompt.yaml  # Underwriting-specific prompts
-├── rag/                          # Retrieval and reranking components
-│   ├── embeddings.py             # Embedding provider adapter
-│   ├── reranker.py               # Reranking logic
-│   └── vectorstores/            # FAISS-backed vectorstores
-├── services/                     # Business logic
-│   └── llm_service.py            # LLM calls & tool routing
-├── tools/                        # Domain-specific tools
-│   ├── advanced_tools.py         # Additional helper tools
-│   ├── credit_score_tool.py      # Credit analysis tool
-│   ├── dti_tool.py               # DTI ratio calculator
-│   ├── document_tool.py          # Document verification
-│   ├── langchain_tools.py        # LangChain tool wrappers
-│   ├── parse_values.py           # Tool parsing logic
-│   ├── router.py                 # Tool routing logic
-│   ├── rag_tool.py               # Retrieval-augmented generation tool
-│   └── tool_registry.py          # Tool registry
-├── vectorstore/                  # Vector search & embeddings
-│   └── example_store.py          # FAISS vector store
-├── eval/                         # Evaluation utilities and reports
-├── logs/                         # Application logs
-│   └── interactions.log          # Interaction logs
-├── memory.db                     # SQLite conversation database
-├── requirements.txt              # Python dependencies
-├── .env                          # Environment variables
-├── .vscode/                      # VS Code workspace settings
-└── .gitignore                    # Git ignore rules
+```text
+app.py                  # Streamlit frontend
+api/                    # FastAPI routes and app setup
+chains/                 # Orchestration for tool/RAG/HITL flows
+rag/                    # Loaders, chunkers, embeddings, retrieval, reranking
+tools/                  # Credit score, DTI, document verification, RAG tools
+mcp/                    # MCP registry, client, adapter, simulated handlers
+hitl/                   # HITL task model, store, trigger engine, manager
+rbac/                   # Role registry, validator, audit, filtering
+eval/                   # Golden-set eval, regression suite, drift check, dashboard
+prompts/                # Prompt YAML and versioned prompt definitions
+config/                 # HITL rules, prompt config, MCP server config
 ```
 
----
+## Prerequisites
 
-## 🚀 Quick Start
-
-### Prerequisites
 - Python 3.10+
-- An OpenAI API key
-- A working internet connection for the LLM API calls
+- An OpenAI or Anthropic API key (depending on the model provider configured)
+- Internet access for external LLM calls and optional LangSmith tracing
 
-### Installation
+## Environment setup
 
-1. **Clone the repository**
+Create a `.env` file in the project root with values such as:
+
 ```bash
-git clone https://github.com/hari6235/Project_Loan-underwriting_GenAI.git
-cd Project_Loan-underwriting_GenAI
+OPENAI_API_KEY=your-openai-key
+LLM_MODEL=gpt-4o-mini
+LLM_TEMPERATURE=0.2
+API_BASE_URL=http://127.0.0.1:8000
+
+# Optional LangSmith tracing
+LANGCHAIN_API_KEY=your-langsmith-key
+LANGCHAIN_PROJECT=loan_underwriting_assistant
 ```
 
-2. **Create and activate a virtual environment**
+If you use VS Code and see import diagnostics, set the interpreter to the project virtual environment at `venv/bin/python` and reload the window.
+
+## Quick start
+
 ```bash
 python -m venv venv
-source venv/bin/activate  # On Windows: venv\Scripts\activate
-```
-
-3. **Install dependencies**
-```bash
+source venv/bin/activate
 pip install -r requirements.txt
 ```
 
-4. **Set up environment variables**
-Create a `.env` file in the project root and add at least:
-```bash
-OPENAI_API_KEY=your-openai-key-here
-LLM_MODEL=gpt-4o-mini
-LLM_TEMPERATURE=0.2
+Run the backend:
 
-# Optional LangSmith tracing
-LANGCHAIN_API_KEY=your-langsmith-key-here
-LANGCHAIN_PROJECT=hari_loan_underwriting_chatbot_tracing
-```
-
-If VS Code shows import errors, select the interpreter at `venv/bin/python` and reload the window.
-
-5. **Run the application**
-
-Open two terminal windows:
-
-**Terminal 1 - Backend API**
 ```bash
 uvicorn api.main:app --reload --host 0.0.0.0 --port 8000
 ```
 
-**Terminal 2 - Frontend UI**
+Run the frontend in a second terminal:
+
 ```bash
 streamlit run app.py
 ```
 
-The Streamlit app will open at `http://localhost:8501`.
+Then open `http://localhost:8501`.
 
-### Document Upload Workflow
-Users can upload supporting documents from the Streamlit UI, ingest them into the vector store, and ask context-aware questions about those documents. This improves underwriting analysis, document review, and policy-based Q&A.
+## Main workflows
 
----
+- Chat with the underwriting assistant
+- Upload and index policy or support documents from the UI
+- Ask retrieval-based questions over the indexed knowledge base
+- Review pending HITL approvals for high-risk actions
+- Switch roles from the sidebar to test RBAC behavior
+- Roll back prompt versions from the prompt management tab
+- Trigger evaluation flows from the eval dashboard or API endpoints
 
-## 📡 API Endpoints
+## API highlights
 
-### POST /chat
-Process a user message and return the AI response, along with tool output and citations when RAG is used.
+- `POST /chat` – Send a user message and receive a response
+- `POST /reset` – Clear memory for a session
+- `GET /health` – Check service health and basic status
+- `POST /ingest` – Upload a document for ingestion into the knowledge base
+- `GET /ingest/status/{job_id}` – Check document-ingestion progress
+- `GET /sources` and `DELETE /sources/{doc_id}` – Inspect or remove indexed sources
+- `GET /hitl/pending` and `POST /hitl/review/{task_id}` – Review human approval tasks
+- `GET /prompts` and `POST /prompts/{name}/activate` – Manage prompt versions
+- `GET /mcp/tools` and `POST /mcp/invoke` – Inspect and invoke MCP-backed tools
+- `POST /eval/regression` and `POST /eval/drift` – Run evaluation workflows
 
-**Request:**
-```json
-{
-  "session_id": "user1",
-  "message": "What is the credit score for applicant A-9912?"
-}
-```
+## Testing and evaluation
 
-### POST /reset
-Clear conversation memory for a session.
+Run the test suite:
 
 ```bash
-curl -X POST "http://localhost:8000/reset?session_id=user1"
+pytest
 ```
 
-### GET /health
-Check API health and vector-store status.
+Run health checks or evaluation endpoints from the API once the backend is running:
 
 ```bash
 curl http://localhost:8000/health
 ```
 
-### POST /ingest
-Upload a document for indexing into the knowledge base.
+## Notes
 
-```bash
-curl -X POST "http://localhost:8000/ingest" -F "file=@policy.pdf"
-```
+- The app stores session memory and HITL state locally in the project workspace
+- Uploaded documents are stored under `data/uploads/`
+- Audit logs and evaluation reports are written under `logs/` and `reports/`
+- LangSmith tracing is active when the relevant environment variables are configured
 
-### GET /ingest/status/{job_id}
-Check the progress of an ingestion job.
+## License
 
-### POST /retrieve
-Run a retrieval-only search against the indexed document chunks.
-
-### GET /sources
-List currently indexed sources and chunk counts.
-
-### DELETE /sources/{doc_id}
-Delete an indexed document source and refresh the retriever.
-
-### POST /evaluate
-Run the evaluation pipeline for the assistant.
-
----
-
-## 🛠️ Core Tools
-
-### 1. Credit Score Analyzer
-Evaluates credit score and determines risk classification.
-
-```python
-from tools.credit_score_tool import credit_score_analyzer
-
-result = credit_score_analyzer(720)
-# Output: {credit_score: 720, category: "GOOD", risk_level: "MEDIUM", ...}
-```
-
-**Risk Classifications:**
-- **750+**: EXCELLENT (Low Risk)
-- **700-749**: GOOD (Medium Risk)
-- **650-699**: MODERATE (High Risk)
-- **Below 650**: POOR (Reject)
-
-### 2. DTI Calculator
-Calculates debt-to-income ratio for loan eligibility.
-
-```python
-from tools.dti_tool import dti_calculator
-
-result = dti_calculator(monthly_income=100000, emi=30000)
-# Output: {dti_ratio: 0.30, risk_level: "LOW", max_loan_multiplier: 5}
-```
-
-**Risk Levels:**
-- **≤0.3**: LOW (Max loan = 5x income)
-- **0.3-0.5**: MEDIUM (Max loan = 3x income)
-- **>0.5**: HIGH (Max loan = 1.5x income)
-
-### 3. Document Verification
-Validates KYC documents for compliance.
-
-```python
-from tools.document_tool import document_verification
-
-result = document_verification(pan="ABCDE1234F", aadhaar="123456789012")
-# Output: {pan_valid: true, aadhaar_valid: true, status: "VERIFIED", ...}
-```
-
-**Supported Documents:**
-- PAN (10 characters)
-- Aadhaar (12 digits)
-- ITR documents
-
----
-
-## 🔒 Security Features
-
-### PII Detection
-Blocks personally identifiable information:
-- Aadhaar numbers (12 digits)
-- PAN numbers (10-char format)
-- Phone numbers (10 digits)
-
-### Prompt Injection Detection
-Prevents malicious prompt modification:
-- Blocks common injection keywords
-- Validates input before processing
-
-### Topic Filtering
-Ensures queries are banking-related:
-- Validates against banking keywords
-- Rejects off-topic questions
-
----
-
-## 💾 Memory Management
-
-Conversations are stored in SQLite for persistence:
-- **Database**: `memory.db`
-- **Storage**: Up to 10 conversation turns per session
-- **Methods**:
-  - `add(session_id, user_msg, assistant_msg)` - Store interaction
-  - `get(session_id)` - Retrieve conversation history
-  - `clear(session_id)` - Clear session memory
-
----
-
-## 📝 Example Queries
-
-### Banking FAQs
-- "What documents are required for KYC?"
-- "Can I open a savings account online?"
-- "How is loan interest calculated?"
-
-### Loan Analysis
-- "What is the credit score for applicant A-9912?"
-- "Calculate DTI for income 12L and liabilities 4.8L"
-- "Verify KYC documents for loan #7745"
-
-### Risk Assessment
-- "Why was application #3310 flagged as high risk?"
-- "What is the maximum loan amount for a 680 credit score?"
-- "Re-assess applicant with new co-applicant income"
-
----
-
-## 📊 Tech Stack
-
-| Component | Technology |
-|-----------|------------|
-| **Backend** | FastAPI + Python |
-| **Frontend** | Streamlit |
-| **LLM** | OpenAI GPT-4o-mini |
-| **Vector DB** | FAISS (ChromaDB) |
-| **Memory** | SQLite |
-| **Validation** | Pydantic |
-| **Prompt Framework** | LangChain |
-| **Async** | Python asyncio |
-
----
-
-## 📋 Dependencies
-
-Key packages:
-- `fastapi` - Web framework
-- `uvicorn` - ASGI server
-- `streamlit` - UI framework
-- `langchain` - LLM orchestration
-- `langchain-openai` - OpenAI integration
-- `pydantic` - Data validation
-- `faiss-cpu` - Vector storage
-- `tenacity` - Retry logic
-- `langsmith` - LLM tracing
-
-See `requirements.txt` for complete list.
-
----
-
-## 🧪 Testing
-
-Test queries covering different scenarios:
-
-1. Simple FAQs
-2. Tool invocation (credit score, DTI)
-3. Document verification
-4. Multi-turn conversations
-5. Edge cases & error handling
-
----
-
-## 🐛 Troubleshooting
-
-### API Connection Error
-- Ensure FastAPI is running: `uvicorn api.main:app --reload`
-- Check port 8000 is available
-- Verify `.env` has valid `OPENAI_API_KEY`
-
-### Memory Issues
-- Check `memory.db` exists in project root
-- Clear old sessions: Call `/reset` endpoint
-- Restart app if database is corrupted
-
-### Tool Not Responding
-- Verify tool imports in `services/llm_service.py`
-- Check tool parameters match function signatures
-- Review logs in `logs/interactions.log`
-
-### Slow Responses
-- Check OpenAI API rate limits
-- Verify network connectivity
-- Consider adding response caching (in progress)
-
----
-## � LangSmith Tracing
-
-LangSmith integration is **active** and fully operational. All LLM invocations, token usage, latency, and costs are tracked in real-time.
-
-**Evidence**: See [docs/LANGSMITH_INTEGRATION.md](docs/LANGSMITH_INTEGRATION.md) for screenshots, configuration details, and monitoring instructions.
-
-**Project Dashboard**: https://smith.langchain.com → Project: `hari_loan_underwriting_chatbot_tracing`
-
----
-
-## 🚧 Roadmap
-
-Planned improvements:
-- [x] Integrate LangSmith for tracing
-- [ ] Add retry logic with exponential backoff
-- [ ] Add in-memory caching layer
-- [ ] Redis support for distributed sessions
-- [ ] Enhanced error handling
-- [ ] Comprehensive logging
-- [ ] API rate limiting
-- [ ] User authentication
-
----
-
-## 📄 License
-
-This project is for educational and demonstration purposes.
-
----
-
-## 👤 Author
-
-Harisankar has Created this project as a demonstration of LangChain-based banking AI assistant and is submitted for evaluation to the Trainer from Learquest(Surya).
+This project is intended for educational and demonstration purposes.
 
 ---
 

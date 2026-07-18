@@ -1,33 +1,42 @@
 # FILE: config/hitl_rules.yaml
 # HITL trigger rules for Loan Underwriting & Credit Risk (Section 3.3, Week 8).
 # Each rule is evaluated against a structured `decision_context` dict that
-# core/chain.py assembles from the current turn's tool outputs before
-# finalising a response (see hitl/triggers.py for the evaluator).
+# chains/tool_chain.py assembles from THIS TURN'S TOOL OUTPUTS, keyed by
+# tool name -- e.g. {"dti_calculator": {...}, "credit_score_analyzer": {...}}.
 #
-# condition.field is looked up in decision_context via dotted-path lookup.
-# operator is one of: gt, gte, lt, lte, eq, neq, in, contains, exists.
+# IMPORTANT: condition.field's first path segment MUST be an actual
+# registered tool name (see tools/tool_registry.py's TOOLS list), and the
+# remaining segments must match that tool's real output keys. A field
+# path that doesn't correspond to a real tool call can NEVER fire, no
+# matter what the user says in chat -- this file previously had exactly
+# that bug on all 4 rules (wrong tool names, wrong field names, and one
+# target value that no tool ever produces). See
+# tests/test_hitl_workflow.py::test_all_rule_paths_resolve_to_real_tools
+# for the regression guard against this recurring.
+#
+# condition.operator is one of: gt, gte, lt, lte, eq, neq, in, contains, exists.
 
 rules:
   - id: high_loan_amount
     description: "Loan amount exceeds ₹50L -- requires senior sign-off."
     condition:
-      field: loan_amount
+      field: evaluate_loan_request.loan_amount
       operator: gt
       value: 5000000
     severity: high
 
   - id: dti_policy_exception
-    description: "DTI ratio requested exceeds the policy-approved band."
+    description: "DTI risk tier is HIGH (per dti_calculator, DTI > 50%) -- requires policy exception review."
     condition:
-      field: dti_assessment.risk_tier
+      field: dti_calculator.risk_level
       operator: eq
-      value: "EXCEPTION_REQUIRED"
+      value: "HIGH"
     severity: high
 
   - id: policy_override_requested
     description: "User is explicitly asking to override or bypass stated policy."
     condition:
-      field: policy_override_requested
+      field: flag_policy_override.flagged
       operator: eq
       value: true
     severity: critical
@@ -35,7 +44,7 @@ rules:
   - id: low_credit_score
     description: "Credit score below the auto-approval threshold (650)."
     condition:
-      field: credit_score_assessment.credit_score
+      field: credit_score_analyzer.credit_score
       operator: lt
       value: 650
     severity: medium

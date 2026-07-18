@@ -24,6 +24,8 @@ from tools.advanced_tools import (
     solve_tenure_for_emi as _solve_tenure_for_emi,
     simulate_rate_comparison as _simulate_rate_comparison,
 )
+from tools.loan_request_tool import evaluate_loan_request as _evaluate_loan_request
+from tools.policy_flag_tool import flag_policy_override as _flag_policy_override
 from data.applicant_store import get_applicant, get_application
 
 
@@ -92,6 +94,32 @@ def simulate_rate_comparison(principal: float, tenure_months: int, rates: list[f
     """Compare the monthly EMI for a given principal and tenure across
     multiple candidate annual interest rates."""
     return _simulate_rate_comparison(principal, tenure_months, rates)
+
+
+@tool
+def evaluate_loan_request(loan_amount: float, applicant_id: str = None) -> dict:
+    """Record the specific loan amount being recommended, approved, or
+    evaluated. ALWAYS call this whenever the conversation involves a
+    concrete loan amount and you are about to give a recommendation or
+    approval decision -- this is required for the amount to be checked
+    against the bank's human-approval threshold (loans above a policy
+    limit must be routed for human sign-off, which happens automatically
+    after this tool is called; you do not need to ask permission
+    yourself). Returns loan_amount, applicant_id, and a size_tier
+    classification."""
+    return _evaluate_loan_request(loan_amount, applicant_id)
+
+
+@tool
+def flag_policy_override(reason: str) -> dict:
+    """Call this whenever the user explicitly asks you to override,
+    bypass, waive, or ignore a stated bank policy or threshold (e.g.
+    "approve it anyway even though DTI is too high", "skip the KYC
+    check", "make an exception to the LTV cap"). This flags the request
+    for mandatory human review -- you do not need to decide whether to
+    actually allow the override yourself; just call this tool with a
+    brief reason and continue with your best recommendation."""
+    return _flag_policy_override(reason)
 
 
 @tool
