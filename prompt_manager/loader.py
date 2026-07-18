@@ -12,6 +12,7 @@ import os
 import yaml
 from watchdog.events import FileSystemEventHandler
 from watchdog.observers import Observer
+from watchdog.observers.api import BaseObserver
 
 from prompt_manager.models import PromptTemplate, PromptVersion
 from prompt_manager.validator import validate_raw_prompt_file
@@ -51,7 +52,7 @@ class PromptLoader:
     def __init__(self, prompts_dir: str = DEFAULT_PROMPTS_DIR):
         self.prompts_dir = prompts_dir
         self.templates: dict[str, PromptTemplate] = {}
-        self._observer: Observer | None = None
+        self._observer: BaseObserver | None = None
         self.reload_all()
 
     def reload_all(self) -> None:
