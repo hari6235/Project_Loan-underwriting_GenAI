@@ -1,3 +1,13 @@
+from pathlib import Path
+from dotenv import load_dotenv
+load_dotenv(dotenv_path=Path(__file__).resolve().parent / ".env")
+               # must run before anything that constructs an OpenAI client at import time
+               # (rag/state.py builds OpenAIEmbeddings() at module load, and eval_tab's
+               # render_eval_dashboard() -> eval.regression_suite -> rag.state runs on
+               # EVERY Streamlit rerun regardless of which tab is visually active).
+               # Path resolved relative to this file, not cwd, so it works regardless
+               # of the directory Streamlit was launched from.
+
 import streamlit as st
 import requests
 import json

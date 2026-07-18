@@ -1,4 +1,12 @@
 # FILE: api/main.py
+from pathlib import Path
+from dotenv import load_dotenv
+load_dotenv(dotenv_path=Path(__file__).resolve().parents[1] / ".env")
+               # must run before importing api.routes, which imports rag.state
+               # (rag/state.py builds OpenAIEmbeddings() at module load time).
+               # Path resolved relative to this file (api/main.py -> project root),
+               # not cwd, so it works regardless of the directory uvicorn was launched from.
+
 from fastapi import FastAPI
 
 from api.routes import router

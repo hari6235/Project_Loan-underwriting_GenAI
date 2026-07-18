@@ -52,5 +52,24 @@ class FAISSStore(VectorStore):
             self.index.save_local(path)
 
     def load(self, path: str = DEFAULT_INDEX_DIR, embedder=None) -> None:
-        if os.path.exists(path):
+        if not os.path.exists(path):
+            return
+        try:
             self.index = FAISS.load_local(path, embedder, allow_dangerous_deserialization=True)
+        except Exception:
+            # A stale index (e.g. pickled under a different langchain/pydantic
+            # version than what's currently installed) must not take down the
+            # whole app at import time -- rag/state.py calls load() at module
+            # load, so an exception here previously crashed every entry point
+            # (FastAPI, Streamlit, eval/*) on startup with no clear next step.
+            # Degrade to an empty index instead; /health and /sources will
+            # correctly show 0 indexed chunks until the operator re-ingests.
+            from utils.logger import get_logger
+            logger = get_logger("rag.vectorstores.faiss_store")
+            logger.error(
+                "Failed to load existing FAISS index at '%s' -- likely stale/incompatible "
+                "with the currently installed langchain/pydantic version. Starting with an "
+                "empty index. Delete '%s' and re-ingest documents to rebuild it.",
+                path, path, exc_info=True,
+            )
+            self.index = None

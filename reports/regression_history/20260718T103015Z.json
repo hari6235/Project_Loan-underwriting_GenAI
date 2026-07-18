@@ -1,0 +1,77 @@
+{
+  "timestamp": "2026-07-18T10:30:15.001422+00:00",
+  "checks": {
+    "hit_rate_at_5": {
+      "value": 0.06060606060606061,
+      "threshold": 0.85,
+      "passed": false
+    },
+    "mrr": {
+      "value": 0.0,
+      "threshold": 0.65,
+      "passed": false
+    },
+    "faithfulness": {
+      "value": null,
+      "threshold": 0.9,
+      "passed": null
+    },
+    "answer_correctness": {
+      "value": null,
+      "threshold": 0.8,
+      "passed": null
+    },
+    "llm_judge_avg": {
+      "value": 2.9499999999999997,
+      "threshold": 4.0,
+      "passed": false
+    },
+    "citation_coverage": {
+      "value": 0.0,
+      "threshold": 1.0,
+      "passed": false
+    },
+    "role_filter_leakage_rate": {
+      "value": 0.0,
+      "threshold": 0.0,
+      "passed": true
+    },
+    "role_appropriateness": {
+      "value": 1.0,
+      "threshold": 1.0,
+      "passed": true
+    },
+    "regulatory_compliance_score": {
+      "value": 0.0,
+      "threshold": null,
+      "passed": null
+    },
+    "answer_stability": {
+      "value": 1.0,
+      "threshold": null,
+      "passed": null
+    }
+  },
+  "overall_pass_rate": 0.3333333333333333,
+  "overall_pass": false,
+  "n_items": {
+    "total": 53,
+    "rag": 13,
+    "tool": 20,
+    "hybrid": 20
+  },
+  "citation_coverage_n": 31,
+  "role_filter_leakage_n": 3,
+  "role_appropriateness_n": 33,
+  "regulatory_compliance_n": 4,
+  "answer_stability_n": 5,
+  "diagnostics": {
+    "extrinsic_n": 10,
+    "extrinsic_n_failed_rows": 10,
+    "extrinsic_error": null,
+    "extrinsic_answer_relevancy": null,
+    "llm_judge_n": 10,
+    "llm_judge_failures": 0,
+    "llm_judge_model": "claude-haiku-4-5-20251001"
+  }
+}

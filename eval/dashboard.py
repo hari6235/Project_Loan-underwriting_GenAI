@@ -70,6 +70,18 @@ def render_eval_dashboard() -> None:
     st.markdown("**Latest check details:**")
     st.json(latest.get("checks", {}))
 
+    diagnostics = latest.get("diagnostics")
+    if diagnostics:
+        with st.expander("🔍 Why is a metric NULL? (diagnostics)"):
+            st.caption(
+                "n_failed_rows > 0 means ragas's internal LLM calls errored on some/all "
+                "golden-set rows for faithfulness/answer_correctness/answer_relevancy -- "
+                "check 'extrinsic_error' below, and your server console for ragas's own "
+                "per-row warning, for the specific cause (commonly: API key, rate limit, "
+                "or model access)."
+            )
+            st.json(diagnostics)
+
     if len(history) >= 2:
         st.markdown("---")
         st.markdown("**Compare last two runs:**")

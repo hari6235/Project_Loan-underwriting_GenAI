@@ -1,89 +1,662 @@
 [
   {
     "query": "What is the maximum LTV ratio for a home loan above 75L per our internal credit policy?",
-    "expected_answer": "As per policy, LTV for home loans above 75L is capped at 75%.",
+    "expected_answer": "Per the credit policy manual, home loans above 75L are capped at a specific LTV threshold.",
     "expected_chunk_ids": [
       "credit_policy_manual_12"
     ],
     "category": "policy_lookup",
-    "difficulty": "easy"
+    "difficulty": "easy",
+    "eval_bucket": "rag",
+    "role": "senior_underwriter"
   },
   {
     "query": "What does the RBI Master Circular say about classifying restructured loans?",
-    "expected_answer": "Restructured loans must be classified as per RBI's asset classification norms with a standstill clause during the review period.",
+    "expected_answer": "The RBI Master Circular sets out asset-classification norms for restructured loans.",
     "expected_chunk_ids": [
-      "rbi_circular_07"
+      "rbi_master_circular_34",
+      "rbi_master_circular_35"
     ],
     "category": "regulatory",
-    "difficulty": "medium"
+    "difficulty": "medium",
+    "eval_bucket": "rag",
+    "role": "senior_underwriter"
+  },
+  {
+    "query": "Given DTI of 47% and credit score 710, can we approve as per current underwriting policy?",
+    "expected_answer": "Policy allows approval in this DTI/score band subject to conditions.",
+    "expected_chunk_ids": [
+      "credit_policy_manual_20"
+    ],
+    "category": "policy_plus_tool",
+    "difficulty": "hard",
+    "eval_bucket": "rag",
+    "role": "senior_underwriter"
+  },
+  {
+    "query": "Find prior underwriting memos where co-applicant income brought DTI below the threshold.",
+    "expected_answer": "Several memos document co-applicant income bringing DTI within policy limits.",
+    "expected_chunk_ids": [
+      "underwriting_memo_03_2",
+      "underwriting_memo_07_1"
+    ],
+    "category": "past_case_recall",
+    "difficulty": "hard",
+    "eval_bucket": "rag",
+    "role": "senior_underwriter"
+  },
+  {
+    "query": "Compare prepayment penalty rules between home loan and loan against property.",
+    "expected_answer": "Prepayment penalty terms differ by product line per the policy fee schedule.",
+    "expected_chunk_ids": [
+      "credit_policy_manual_41",
+      "credit_policy_manual_44"
+    ],
+    "category": "comparative",
+    "difficulty": "medium",
+    "eval_bucket": "rag",
+    "role": "senior_underwriter"
+  },
+  {
+    "query": "What is the escalation path for an underwriting exception above 2 Cr?",
+    "expected_answer": "Exceptions above 2 Cr require credit committee escalation per policy.",
+    "expected_chunk_ids": [
+      "credit_policy_manual_55"
+    ],
+    "category": "procedural",
+    "difficulty": "medium",
+    "eval_bucket": "rag",
+    "role": "senior_underwriter"
+  },
+  {
+    "query": "What is the minimum monthly net salary for a home loan applicant in metro areas?",
+    "expected_answer": "Policy specifies a minimum net monthly salary threshold for metro applicants.",
+    "expected_chunk_ids": [
+      "credit_policy_manual_9"
+    ],
+    "category": "numerical",
+    "difficulty": "easy",
+    "eval_bucket": "rag",
+    "role": "senior_underwriter"
+  },
+  {
+    "query": "Combining policy and the RBI circular, what's the right approach to income-shock loan modification requests?",
+    "expected_answer": "Income-shock modification should follow both internal policy and RBI circular guidance.",
+    "expected_chunk_ids": [
+      "credit_policy_manual_47",
+      "rbi_master_circular_36"
+    ],
+    "category": "multi_document",
+    "difficulty": "hard",
+    "eval_bucket": "rag",
+    "role": "senior_underwriter"
   },
   {
     "query": "What's our policy on accepting cryptocurrency holdings as collateral?",
-    "expected_answer": "Not covered in the indexed policy documents - should be a refusal.",
+    "expected_answer": "This is not covered in the indexed policy documents.",
     "expected_chunk_ids": [],
     "category": "refusal_test",
+    "difficulty": "hard",
+    "eval_bucket": "rag",
+    "role": "senior_underwriter"
+  },
+  {
+    "query": "Generate a credit committee memo for application #7745 with cited references to the relevant policy clauses.",
+    "expected_answer": "A memo referencing the applicant's profile against relevant policy clauses on income and DTI.",
+    "expected_chunk_ids": [
+      "credit_policy_manual_9",
+      "credit_policy_manual_20"
+    ],
+    "category": "cite_required",
+    "difficulty": "hard",
+    "eval_bucket": "rag",
+    "role": "senior_underwriter"
+  },
+  {
+    "query": "What is the risk category for a credit score of 810?",
+    "expected_answer": null,
+    "expected_chunk_ids": [],
+    "category": "tool_usage",
+    "eval_bucket": "tool",
+    "expected_tool": "credit_score_analyzer",
+    "role": "senior_underwriter",
+    "difficulty": "easy"
+  },
+  {
+    "query": "Classify credit risk for a score of 660.",
+    "expected_answer": null,
+    "expected_chunk_ids": [],
+    "category": "tool_usage",
+    "eval_bucket": "tool",
+    "expected_tool": "credit_score_analyzer",
+    "role": "senior_underwriter",
+    "difficulty": "easy"
+  },
+  {
+    "query": "Calculate DTI for monthly income 90000 and EMI 30000.",
+    "expected_answer": null,
+    "expected_chunk_ids": [],
+    "category": "tool_usage",
+    "eval_bucket": "tool",
+    "expected_tool": "dti_calculator",
+    "role": "senior_underwriter",
+    "difficulty": "easy"
+  },
+  {
+    "query": "What's the DTI risk tier if income is 50000 and EMI is 28000?",
+    "expected_answer": null,
+    "expected_chunk_ids": [],
+    "category": "tool_usage",
+    "eval_bucket": "tool",
+    "expected_tool": "dti_calculator",
+    "role": "senior_underwriter",
+    "difficulty": "easy"
+  },
+  {
+    "query": "Verify KYC for PAN ABCDE1234F and Aadhaar 123456789012.",
+    "expected_answer": null,
+    "expected_chunk_ids": [],
+    "category": "tool_usage",
+    "eval_bucket": "tool",
+    "expected_tool": "document_verification",
+    "role": "senior_underwriter",
+    "difficulty": "easy"
+  },
+  {
+    "query": "Check document verification for PAN XX123 and Aadhaar 111.",
+    "expected_answer": null,
+    "expected_chunk_ids": [],
+    "category": "tool_usage",
+    "eval_bucket": "tool",
+    "expected_tool": "document_verification",
+    "role": "senior_underwriter",
+    "difficulty": "easy"
+  },
+  {
+    "query": "What's the indicative maximum loan amount for a credit score of 780?",
+    "expected_answer": null,
+    "expected_chunk_ids": [],
+    "category": "tool_usage",
+    "eval_bucket": "tool",
+    "expected_tool": "max_loan_by_credit_score",
+    "role": "senior_underwriter",
+    "difficulty": "easy"
+  },
+  {
+    "query": "Indicative max loan for credit score 640?",
+    "expected_answer": null,
+    "expected_chunk_ids": [],
+    "category": "tool_usage",
+    "eval_bucket": "tool",
+    "expected_tool": "max_loan_by_credit_score",
+    "role": "senior_underwriter",
+    "difficulty": "easy"
+  },
+  {
+    "query": "Is a top-up of 8000 EMI eligible for income 70000 and existing EMI 25000?",
+    "expected_answer": null,
+    "expected_chunk_ids": [],
+    "category": "tool_usage",
+    "eval_bucket": "tool",
+    "expected_tool": "topup_eligibility",
+    "role": "senior_underwriter",
+    "difficulty": "easy"
+  },
+  {
+    "query": "Check top-up eligibility: income 100000, existing EMI 45000, requested top-up EMI 10000.",
+    "expected_answer": null,
+    "expected_chunk_ids": [],
+    "category": "tool_usage",
+    "eval_bucket": "tool",
+    "expected_tool": "topup_eligibility",
+    "role": "senior_underwriter",
+    "difficulty": "easy"
+  },
+  {
+    "query": "What's the max allowed EMI for income 60000 at 40% target DTI?",
+    "expected_answer": null,
+    "expected_chunk_ids": [],
+    "category": "tool_usage",
+    "eval_bucket": "tool",
+    "expected_tool": "max_allowed_emi_for_target_dti",
+    "role": "senior_underwriter",
+    "difficulty": "easy"
+  },
+  {
+    "query": "Max EMI for income 120000 at a 35% DTI target?",
+    "expected_answer": null,
+    "expected_chunk_ids": [],
+    "category": "tool_usage",
+    "eval_bucket": "tool",
+    "expected_tool": "max_allowed_emi_for_target_dti",
+    "role": "senior_underwriter",
+    "difficulty": "easy"
+  },
+  {
+    "query": "Solve for tenure needed so EMI stays under 20000 for a 1500000 loan at 9% interest.",
+    "expected_answer": null,
+    "expected_chunk_ids": [],
+    "category": "tool_usage",
+    "eval_bucket": "tool",
+    "expected_tool": "solve_tenure_for_target_emi",
+    "role": "senior_underwriter",
+    "difficulty": "easy"
+  },
+  {
+    "query": "What tenure keeps EMI under 15000 for a 1000000 loan at 8.5%?",
+    "expected_answer": null,
+    "expected_chunk_ids": [],
+    "category": "tool_usage",
+    "eval_bucket": "tool",
+    "expected_tool": "solve_tenure_for_target_emi",
+    "role": "senior_underwriter",
+    "difficulty": "easy"
+  },
+  {
+    "query": "Compare EMI for a 2000000 loan over 180 months at 8%, 9%, and 10%.",
+    "expected_answer": null,
+    "expected_chunk_ids": [],
+    "category": "tool_usage",
+    "eval_bucket": "tool",
+    "expected_tool": "simulate_rate_comparison",
+    "role": "senior_underwriter",
+    "difficulty": "easy"
+  },
+  {
+    "query": "Simulate interest rate comparison for principal 800000, tenure 60 months, rates 9% and 11%.",
+    "expected_answer": null,
+    "expected_chunk_ids": [],
+    "category": "tool_usage",
+    "eval_bucket": "tool",
+    "expected_tool": "simulate_rate_comparison",
+    "role": "senior_underwriter",
+    "difficulty": "easy"
+  },
+  {
+    "query": "Pull up applicant A-9912's record.",
+    "expected_answer": null,
+    "expected_chunk_ids": [],
+    "category": "tool_usage",
+    "eval_bucket": "tool",
+    "expected_tool": "get_applicant_record",
+    "role": "senior_underwriter",
+    "difficulty": "easy"
+  },
+  {
+    "query": "What's on file for application #8899?",
+    "expected_answer": null,
+    "expected_chunk_ids": [],
+    "category": "tool_usage",
+    "eval_bucket": "tool",
+    "expected_tool": "get_applicant_record",
+    "role": "senior_underwriter",
+    "difficulty": "easy"
+  },
+  {
+    "query": "Why was applicant A-9912 flagged?",
+    "expected_answer": null,
+    "expected_chunk_ids": [],
+    "category": "tool_usage",
+    "eval_bucket": "tool",
+    "expected_tool": "get_applicant_record",
+    "role": "senior_underwriter",
+    "difficulty": "easy"
+  },
+  {
+    "query": "Re-run underwriting for A-101 assuming salary revision to 180000.",
+    "expected_answer": null,
+    "expected_chunk_ids": [],
+    "category": "tool_usage",
+    "eval_bucket": "tool",
+    "expected_tool": "get_applicant_record",
+    "role": "senior_underwriter",
+    "difficulty": "easy"
+  },
+  {
+    "query": "Applicant has DTI 38% and credit score 705 -- does that clear our LTV policy for a home loan above 75L?",
+    "expected_answer": null,
+    "expected_chunk_ids": [
+      "credit_policy_manual_12"
+    ],
+    "category": "hybrid",
+    "eval_bucket": "hybrid",
+    "expected_tools": [
+      "dti_calculator",
+      "credit_score_analyzer",
+      "knowledge_retrieval"
+    ],
+    "role": "senior_underwriter",
     "difficulty": "hard"
   },
   {
-    "query": "What about for a loan against property instead?",
-    "history": [
-      {
-        "user": "What is the maximum LTV ratio for a home loan above 75L per our internal credit policy?",
-        "assistant": "{\"response\": \"As per policy, LTV for home loans above 75L is capped at 75%. [chunk_id: credit_policy_manual_12]\", \"type\": \"rag_response\"}"
-      }
-    ],
-    "expected_answer": "As per policy, LTV for loan against property (LAP) is capped at 65%.",
+    "query": "For applicant A-9912, does their current DTI meet the policy threshold for approval?",
+    "expected_answer": null,
     "expected_chunk_ids": [
-      "credit_policy_manual_15"
+      "credit_policy_manual_20"
     ],
-    "category": "multi_turn_policy_lookup",
-    "difficulty": "medium",
-    "note": "Elliptical follow-up ('for a loan against property instead') is only resolvable using the prior turn -- tests that the RAG tool contextualizes before retrieval, not just the isolated fragment."
+    "category": "hybrid",
+    "eval_bucket": "hybrid",
+    "expected_tools": [
+      "get_applicant_record",
+      "dti_calculator",
+      "knowledge_retrieval"
+    ],
+    "role": "senior_underwriter",
+    "difficulty": "hard"
   },
   {
-    "query": "And how long does that standstill period last?",
-    "history": [
-      {
-        "user": "What does the RBI Master Circular say about classifying restructured loans?",
-        "assistant": "{\"response\": \"Restructured loans must be classified as per RBI's asset classification norms with a standstill clause during the review period. [chunk_id: rbi_circular_07]\", \"type\": \"rag_response\"}"
-      }
-    ],
-    "expected_answer": "The standstill clause applies for the review period defined in the RBI Master Circular, during which the asset classification is held rather than downgraded.",
+    "query": "Credit score 690 and EMI 40000 on income 90000 -- what does policy say about approval at this risk tier?",
+    "expected_answer": null,
     "expected_chunk_ids": [
-      "rbi_circular_08"
+      "credit_policy_manual_20"
     ],
-    "category": "multi_turn_regulatory",
-    "difficulty": "medium",
-    "note": "'that standstill period' has no antecedent without the prior turn -- tests pronoun/reference resolution on a regulatory follow-up."
+    "category": "hybrid",
+    "eval_bucket": "hybrid",
+    "expected_tools": [
+      "credit_score_analyzer",
+      "dti_calculator",
+      "knowledge_retrieval"
+    ],
+    "role": "senior_underwriter",
+    "difficulty": "hard"
   },
   {
-    "query": "What if the exception is only ₹80 lakh?",
-    "history": [
-      {
-        "user": "What is the escalation path for an underwriting exception above ₹2 Cr?",
-        "assistant": "{\"response\": \"Exceptions above ₹2 Cr require Regional Credit Committee sign-off, escalating to the Head Office Credit Committee above ₹5 Cr. [chunk_id: credit_policy_manual_22]\", \"type\": \"rag_response\"}"
-      }
-    ],
-    "expected_answer": "For exceptions below ₹2 Cr, branch-level credit committee sign-off is sufficient per policy; regional escalation is not required.",
+    "query": "Is applicant A-101 eligible for a top-up, and what does the Fair Practices Code say about disclosure for top-up loans?",
+    "expected_answer": null,
     "expected_chunk_ids": [
-      "credit_policy_manual_21"
+      "fair_practices_code_5"
     ],
-    "category": "multi_turn_numeric_threshold",
-    "difficulty": "hard",
-    "note": "Tests that a changed numeric threshold in a follow-up gets treated as a NEW policy lookup (different escalation tier), not just answered by re-stating the previous turn's figures."
+    "category": "hybrid",
+    "eval_bucket": "hybrid",
+    "expected_tools": [
+      "get_applicant_record",
+      "topup_eligibility",
+      "knowledge_retrieval"
+    ],
+    "role": "senior_underwriter",
+    "difficulty": "hard"
   },
   {
-    "query": "What about NFTs then?",
-    "history": [
-      {
-        "user": "What's our policy on accepting cryptocurrency holdings as collateral?",
-        "assistant": "{\"response\": \"I don't have this information in the indexed documents.\", \"type\": \"rag_response\"}"
-      }
+    "query": "Given a 47% DTI, what's the escalation path per policy for approving this application?",
+    "expected_answer": null,
+    "expected_chunk_ids": [
+      "credit_policy_manual_55"
     ],
-    "expected_answer": "Not covered in the indexed policy documents - should be a refusal.",
+    "category": "hybrid",
+    "eval_bucket": "hybrid",
+    "expected_tools": [
+      "dti_calculator",
+      "knowledge_retrieval"
+    ],
+    "role": "senior_underwriter",
+    "difficulty": "hard"
+  },
+  {
+    "query": "Applicant A-102's profile -- summarise their risk and cite the relevant policy clause for their DTI band.",
+    "expected_answer": null,
+    "expected_chunk_ids": [
+      "credit_policy_manual_20"
+    ],
+    "category": "hybrid",
+    "eval_bucket": "hybrid",
+    "expected_tools": [
+      "get_applicant_record",
+      "dti_calculator",
+      "knowledge_retrieval"
+    ],
+    "role": "senior_underwriter",
+    "difficulty": "hard"
+  },
+  {
+    "query": "For a credit score of 640, what's the indicative max loan, and does policy allow any exception process at that score?",
+    "expected_answer": null,
+    "expected_chunk_ids": [
+      "credit_policy_manual_55"
+    ],
+    "category": "hybrid",
+    "eval_bucket": "hybrid",
+    "expected_tools": [
+      "max_loan_by_credit_score",
+      "knowledge_retrieval"
+    ],
+    "role": "senior_underwriter",
+    "difficulty": "hard"
+  },
+  {
+    "query": "Applicant income shock: new income 60000, existing EMI 28000 -- per RBI circular and policy, should this be restructured?",
+    "expected_answer": null,
+    "expected_chunk_ids": [
+      "rbi_master_circular_36",
+      "credit_policy_manual_47"
+    ],
+    "category": "hybrid",
+    "eval_bucket": "hybrid",
+    "expected_tools": [
+      "dti_calculator",
+      "knowledge_retrieval"
+    ],
+    "role": "senior_underwriter",
+    "difficulty": "hard"
+  },
+  {
+    "query": "What tenure keeps EMI under the policy DTI cap for income 70000, and what's that cap per policy?",
+    "expected_answer": null,
+    "expected_chunk_ids": [
+      "credit_policy_manual_20"
+    ],
+    "category": "hybrid",
+    "eval_bucket": "hybrid",
+    "expected_tools": [
+      "max_allowed_emi_for_target_dti",
+      "knowledge_retrieval"
+    ],
+    "role": "senior_underwriter",
+    "difficulty": "hard"
+  },
+  {
+    "query": "Verify KYC for PAN ABCDE1234F / Aadhaar 123456789012 and confirm what the Fair Practices Code requires for KYC disclosure.",
+    "expected_answer": null,
+    "expected_chunk_ids": [
+      "fair_practices_code_2"
+    ],
+    "category": "hybrid",
+    "eval_bucket": "hybrid",
+    "expected_tools": [
+      "document_verification",
+      "knowledge_retrieval"
+    ],
+    "role": "senior_underwriter",
+    "difficulty": "hard"
+  },
+  {
+    "query": "Application #3310 -- assess DTI and tell me if it's within the policy-approved range.",
+    "expected_answer": null,
+    "expected_chunk_ids": [
+      "credit_policy_manual_20"
+    ],
+    "category": "hybrid",
+    "eval_bucket": "hybrid",
+    "expected_tools": [
+      "get_applicant_record",
+      "dti_calculator",
+      "knowledge_retrieval"
+    ],
+    "role": "senior_underwriter",
+    "difficulty": "hard"
+  },
+  {
+    "query": "Rate comparison for 1500000 over 120 months at 9% and 10.5% -- and what does policy say about disclosing rate options?",
+    "expected_answer": null,
+    "expected_chunk_ids": [
+      "fair_practices_code_5"
+    ],
+    "category": "hybrid",
+    "eval_bucket": "hybrid",
+    "expected_tools": [
+      "simulate_rate_comparison",
+      "knowledge_retrieval"
+    ],
+    "role": "senior_underwriter",
+    "difficulty": "hard"
+  },
+  {
+    "query": "Applicant A-9912's DTI and credit score -- do these justify the risk flags on file per policy definitions?",
+    "expected_answer": null,
+    "expected_chunk_ids": [
+      "credit_policy_manual_20"
+    ],
+    "category": "hybrid",
+    "eval_bucket": "hybrid",
+    "expected_tools": [
+      "get_applicant_record",
+      "dti_calculator",
+      "credit_score_analyzer",
+      "knowledge_retrieval"
+    ],
+    "role": "senior_underwriter",
+    "difficulty": "hard"
+  },
+  {
+    "query": "For a loan against property, what's the prepayment penalty, and does credit score 710 qualify for a waiver?",
+    "expected_answer": null,
+    "expected_chunk_ids": [
+      "credit_policy_manual_44"
+    ],
+    "category": "hybrid",
+    "eval_bucket": "hybrid",
+    "expected_tools": [
+      "credit_score_analyzer",
+      "knowledge_retrieval"
+    ],
+    "role": "senior_underwriter",
+    "difficulty": "hard"
+  },
+  {
+    "query": "Income 100000, EMI 42000 -- compute DTI and check it against the RBI circular's restructuring guidance.",
+    "expected_answer": null,
+    "expected_chunk_ids": [
+      "rbi_master_circular_34"
+    ],
+    "category": "hybrid",
+    "eval_bucket": "hybrid",
+    "expected_tools": [
+      "dti_calculator",
+      "knowledge_retrieval"
+    ],
+    "role": "senior_underwriter",
+    "difficulty": "hard"
+  },
+  {
+    "query": "Applicant A-101 wants a top-up -- check eligibility and cite the policy clause on top-up loan limits.",
+    "expected_answer": null,
+    "expected_chunk_ids": [
+      "credit_policy_manual_41"
+    ],
+    "category": "hybrid",
+    "eval_bucket": "hybrid",
+    "expected_tools": [
+      "get_applicant_record",
+      "topup_eligibility",
+      "knowledge_retrieval"
+    ],
+    "role": "senior_underwriter",
+    "difficulty": "hard"
+  },
+  {
+    "query": "Credit score 750, income 150000, EMI 30000 -- summarise approval likelihood referencing the relevant policy clause.",
+    "expected_answer": null,
+    "expected_chunk_ids": [
+      "credit_policy_manual_20"
+    ],
+    "category": "hybrid",
+    "eval_bucket": "hybrid",
+    "expected_tools": [
+      "credit_score_analyzer",
+      "dti_calculator",
+      "knowledge_retrieval"
+    ],
+    "role": "senior_underwriter",
+    "difficulty": "hard"
+  },
+  {
+    "query": "What's the minimum salary requirement per policy, and does applicant A-102's income meet it?",
+    "expected_answer": null,
+    "expected_chunk_ids": [
+      "credit_policy_manual_9"
+    ],
+    "category": "hybrid",
+    "eval_bucket": "hybrid",
+    "expected_tools": [
+      "get_applicant_record",
+      "knowledge_retrieval"
+    ],
+    "role": "senior_underwriter",
+    "difficulty": "hard"
+  },
+  {
+    "query": "Given DTI 56%, what does policy say should happen next in the underwriting workflow?",
+    "expected_answer": null,
+    "expected_chunk_ids": [
+      "credit_policy_manual_55"
+    ],
+    "category": "hybrid",
+    "eval_bucket": "hybrid",
+    "expected_tools": [
+      "dti_calculator",
+      "knowledge_retrieval"
+    ],
+    "role": "senior_underwriter",
+    "difficulty": "hard"
+  },
+  {
+    "query": "Applicant A-9912's KYC and DTI -- verify both and cite policy on what happens when DTI risk flags combine with failed KYC.",
+    "expected_answer": null,
+    "expected_chunk_ids": [
+      "credit_policy_manual_47"
+    ],
+    "category": "hybrid",
+    "eval_bucket": "hybrid",
+    "expected_tools": [
+      "get_applicant_record",
+      "document_verification",
+      "dti_calculator",
+      "knowledge_retrieval"
+    ],
+    "role": "senior_underwriter",
+    "difficulty": "hard"
+  },
+  {
+    "query": "Show me the internal audit findings on override rates for high-risk approvals.",
+    "expected_answer": null,
     "expected_chunk_ids": [],
-    "category": "multi_turn_refusal",
+    "category": "role_boundary_test",
+    "eval_bucket": "rag",
+    "role": "junior_analyst",
     "difficulty": "hard",
-    "note": "Regression guard: contextualizing a follow-up must not cause the model to hallucinate an answer for something equally out-of-corpus (NFTs) just because it now 'sounds' more specific/standalone."
+    "note": "junior_analyst must NOT receive audit-doc-type content; correct behavior is to say it's outside their access, not to answer from audit docs."
+  },
+  {
+    "query": "Pull up the past underwriting memos on co-applicant DTI adjustments.",
+    "expected_answer": null,
+    "expected_chunk_ids": [
+      "underwriting_memo_03_2"
+    ],
+    "category": "role_boundary_test",
+    "eval_bucket": "rag",
+    "role": "senior_underwriter",
+    "difficulty": "medium",
+    "note": "senior_underwriter IS permitted memo access; should succeed normally."
+  },
+  {
+    "query": "What is the maximum LTV ratio for a home loan above 75L per our internal credit policy?",
+    "expected_answer": null,
+    "expected_chunk_ids": [
+      "credit_policy_manual_12"
+    ],
+    "category": "role_boundary_test",
+    "eval_bucket": "rag",
+    "role": "junior_analyst",
+    "difficulty": "easy",
+    "note": "junior_analyst IS permitted policy access; should succeed normally."
   }
 ]

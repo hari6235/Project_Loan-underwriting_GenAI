@@ -190,6 +190,23 @@ def run_regression_suite() -> dict:
         "role_appropriateness_n": role_approp["n"],
         "regulatory_compliance_n": reg_compliance["n"],
         "answer_stability_n": stability["n"],
+        "diagnostics": {
+            # Surfaces WHY a metric is NULL rather than a real (even low)
+            # number, without needing terminal/console access to ragas's
+            # internal per-row warnings. n_failed_rows > 0 on extrinsic
+            # means ragas's internal LLM calls for faithfulness/
+            # answer_correctness/answer_relevancy errored on some or all
+            # rows (auth, rate limit, model access -- check "error" here
+            # first, then your server console for ragas's own per-row
+            # "Exception raised in Job[...]" warning for the specific cause).
+            "extrinsic_n": extrinsic.get("n"),
+            "extrinsic_n_failed_rows": extrinsic.get("n_failed_rows"),
+            "extrinsic_error": extrinsic.get("error"),
+            "extrinsic_answer_relevancy": extrinsic.get("answer_relevancy"),
+            "llm_judge_n": judge.get("n"),
+            "llm_judge_failures": judge.get("judge_failures"),
+            "llm_judge_model": judge.get("judge_model"),
+        },
     }
 
     os.makedirs("reports/regression_history", exist_ok=True)
