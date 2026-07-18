@@ -13,12 +13,19 @@ st.set_page_config(
 )
 st.title("🏦 Loan Underwriting & Credit Risk Assistant")
 
-API_BASE = "http://127.0.0.1:8000"
+import os
+API_BASE = os.getenv("API_BASE_URL", "http://127.0.0.1:8000")
 CHAT_URL = f"{API_BASE}/chat"
 RESET_URL = f"{API_BASE}/reset"
 INGEST_URL = f"{API_BASE}/ingest"
 INGEST_STATUS_URL = f"{API_BASE}/ingest/status"
 SOURCES_URL = f"{API_BASE}/sources"
+ROLES_URL = f"{API_BASE}/roles"
+AUTH_CONTEXT_URL = f"{API_BASE}/auth/context"
+HITL_PENDING_URL = f"{API_BASE}/hitl/pending"
+HITL_REVIEW_URL = f"{API_BASE}/hitl/review"
+PROMPTS_URL = f"{API_BASE}/prompts"
+MCP_TOOLS_URL = f"{API_BASE}/mcp/tools"
 
 # -------------------------
 # SESSION STATE
@@ -30,9 +37,34 @@ if "session_id" not in st.session_state:
     st.session_state.session_id = str(uuid.uuid4())
 
 # -------------------------
+# ROLE SELECTOR (Section 5.2: "role selector" in the UI)
+# -------------------------
+if "user_role" not in st.session_state:
+    st.session_state.user_role = "junior_analyst"
+
+with st.sidebar:
+    st.subheader("Session")
+    try:
+        roles_resp = requests.get(ROLES_URL, timeout=5)
+        role_names = [r["name"] for r in roles_resp.json().get("roles", [])] if roles_resp.status_code == 200 else []
+    except requests.exceptions.RequestException:
+        role_names = []
+    if not role_names:
+        role_names = ["junior_analyst", "senior_underwriter", "credit_head", "auditor"]
+
+    st.session_state.user_role = st.selectbox(
+        "Acting as role", role_names,
+        index=role_names.index(st.session_state.user_role) if st.session_state.user_role in role_names else 0,
+    )
+    st.caption(f"Session ID: `{st.session_state.session_id[:8]}...`")
+
+# -------------------------
 # TABS: CHAT | DOCUMENT MANAGEMENT
 # -------------------------
-chat_tab, docs_tab = st.tabs(["💬 Chat", "📁 Document Management"])
+chat_tab, docs_tab, hitl_tab, prompts_tab, mcp_tab, eval_tab = st.tabs([
+    "💬 Chat", "📁 Document Management", "✅ HITL Approvals",
+    "📝 Prompt Versions", "🔌 MCP Tools", "📊 Eval Dashboard",
+])
 
 # =========================================================
 # CHAT TAB
@@ -56,7 +88,10 @@ with chat_tab:
                 "message": query
             }
             try:
-                response = requests.post(CHAT_URL, json=payload)
+                response = requests.post(
+                    CHAT_URL, json=payload,
+                    headers={"X-User-Role": st.session_state.user_role},
+                )
             except requests.exceptions.RequestException as e:
                 st.error(f"Could not reach backend: {e}")
             else:
@@ -67,11 +102,19 @@ with chat_tab:
                         st.error(f"Backend did not return valid JSON: {response.text}")
                     else:
                         st.session_state.chat_history.append(("user", query, None))
-                        st.session_state.chat_history.append((
-                            "bot",
-                            data.get("response", ""),
-                            data.get("citations"),  # None for non-RAG responses
-                        ))
+                        if data.get("type") == "pending_approval":
+                            st.session_state.chat_history.append((
+                                "bot",
+                                f"⏸️ {data.get('response', '')} (task_id: {data.get('hitl_task_id')}, "
+                                f"severity: {data.get('hitl_severity')}) -- see the HITL Approvals tab.",
+                                None,
+                            ))
+                        else:
+                            st.session_state.chat_history.append((
+                                "bot",
+                                data.get("response", ""),
+                                data.get("citations"),  # None for non-RAG responses
+                            ))
                 else:
                     st.error(f"Backend Error: {response.text}")
 
@@ -202,3 +245,132 @@ with docs_tab:
                         st.error(f"Delete failed: {del_resp.text}")
                 except requests.exceptions.RequestException as e:
                     st.error(f"Could not reach backend: {e}")
+
+# =========================================================
+# HITL APPROVALS TAB (Section 5.2 requirement)
+# =========================================================
+with hitl_tab:
+    st.header("✅ Human-in-the-Loop Approvals")
+    st.caption(
+        "Actions that trip a configured trigger rule (large loan amount, policy override, "
+        "low credit score, DTI exception) pause here for review before being finalised."
+    )
+
+    if st.button("🔄 Refresh pending tasks"):
+        st.rerun()
+
+    try:
+        pending_resp = requests.get(HITL_PENDING_URL, timeout=5)
+        tasks = pending_resp.json().get("tasks", []) if pending_resp.status_code == 200 else []
+    except requests.exceptions.RequestException as e:
+        st.error(f"Could not reach backend: {e}")
+        tasks = []
+
+    if not tasks:
+        st.info("No pending approvals.")
+    else:
+        for task in tasks:
+            with st.expander(
+                f"[{task['severity'].upper()}] {task['task_id'][:8]}... -- {', '.join(task['triggered_rule_ids'])}"
+            ):
+                st.markdown("**Proposed recommendation:**")
+                st.write(task["recommendation"])
+                if task.get("confidence_score") is not None:
+                    st.caption(f"AI confidence: {task['confidence_score']:.2f}")
+                st.markdown("**Supporting context (tool outputs):**")
+                st.json(task.get("context", {}))
+                st.caption(f"Created: {task['created_at']} · Expires: {task.get('expires_at', 'n/a')}")
+
+                comments = st.text_area("Review comments", key=f"comments_{task['task_id']}")
+                col_a, col_r = st.columns(2)
+                if col_a.button("✅ Approve", key=f"approve_{task['task_id']}"):
+                    resp = requests.post(
+                        f"{HITL_REVIEW_URL}/{task['task_id']}",
+                        json={"decision": "approve", "comments": comments, "decided_by": st.session_state.user_role},
+                        headers={"X-User-Role": st.session_state.user_role},
+                    )
+                    if resp.status_code == 200:
+                        st.success("Approved.")
+                        st.rerun()
+                    elif resp.status_code == 403:
+                        st.error(f"Role '{st.session_state.user_role}' cannot approve HITL tasks (needs can_request_hitl_override).")
+                    else:
+                        st.error(resp.text)
+                if col_r.button("❌ Reject", key=f"reject_{task['task_id']}"):
+                    resp = requests.post(
+                        f"{HITL_REVIEW_URL}/{task['task_id']}",
+                        json={"decision": "reject", "comments": comments, "decided_by": st.session_state.user_role},
+                        headers={"X-User-Role": st.session_state.user_role},
+                    )
+                    if resp.status_code == 200:
+                        st.warning("Rejected.")
+                        st.rerun()
+                    elif resp.status_code == 403:
+                        st.error(f"Role '{st.session_state.user_role}' cannot reject HITL tasks (needs can_request_hitl_override).")
+                    else:
+                        st.error(resp.text)
+
+
+# =========================================================
+# PROMPT VERSIONS TAB (Section 5.2 requirement)
+# =========================================================
+with prompts_tab:
+    st.header("📝 Prompt Version Control")
+    try:
+        prompts_resp = requests.get(PROMPTS_URL, timeout=5)
+        prompts = prompts_resp.json().get("prompts", []) if prompts_resp.status_code == 200 else []
+    except requests.exceptions.RequestException as e:
+        st.error(f"Could not reach backend: {e}")
+        prompts = []
+
+    if not prompts:
+        st.info("No prompt templates found.")
+    else:
+        names = [p["name"] for p in prompts]
+        selected = st.selectbox("Prompt template", names)
+        if selected:
+            hist_resp = requests.get(f"{PROMPTS_URL}/{selected}/history")
+            history_data = hist_resp.json().get("history", []) if hist_resp.status_code == 200 else []
+            for v in history_data:
+                label = f"v{v['version']}" + (" (ACTIVE)" if v["is_active"] else "")
+                with st.expander(label):
+                    st.write(f"**Author:** {v['author']}")
+                    st.write(f"**Changelog:** {v['changelog']}")
+                    st.write(f"**Model compatibility:** {', '.join(v['model_compatibility'])}")
+                    st.write(f"**Input variables:** {', '.join(v['input_variables'])}")
+                    if not v["is_active"]:
+                        if st.button(f"⏪ Roll back to v{v['version']}", key=f"activate_{selected}_{v['version']}"):
+                            act_resp = requests.post(f"{PROMPTS_URL}/{selected}/activate", json={"version": v["version"]})
+                            if act_resp.status_code == 200:
+                                st.success(f"Rolled back '{selected}' to v{v['version']}.")
+                                st.rerun()
+                            else:
+                                st.error(act_resp.text)
+
+
+# =========================================================
+# MCP TOOLS TAB
+# =========================================================
+with mcp_tab:
+    st.header("🔌 MCP Tool Servers")
+    try:
+        mcp_resp = requests.get(MCP_TOOLS_URL, timeout=5)
+        servers = mcp_resp.json().get("servers", []) if mcp_resp.status_code == 200 else []
+    except requests.exceptions.RequestException as e:
+        st.error(f"Could not reach backend: {e}")
+        servers = []
+
+    for server in servers:
+        status_icon = "🟢" if server["status"] == "healthy" else ("🔴" if server["status"] == "unhealthy" else "⚪")
+        with st.expander(f"{status_icon} {server['server_id']} ({server['mode']})"):
+            st.write(server["description"])
+            for t in server["tools"]:
+                st.markdown(f"- **{t['name']}**: {t['description']}")
+
+
+# =========================================================
+# EVAL DASHBOARD TAB (Section 5.2 requirement)
+# =========================================================
+with eval_tab:
+    from eval.dashboard import render_eval_dashboard
+    render_eval_dashboard()

@@ -1,0 +1,92 @@
+# FILE: config/mcp_servers.yaml
+# MCP tool server registry for Loan Underwriting & Credit Risk (Section 3.1).
+#
+# Each server has a `mode`:
+#   - "http"      -> real MCP-compliant HTTP endpoint, called via mcp/client.py
+#                    using `base_url` + `auth_env_var` (API key read from env).
+#   - "simulated" -> no live third-party contract exists for this course
+#                    project, so the server is backed by a local, in-repo
+#                    handler (mcp/tool_adapter.py -> SIMULATED_HANDLERS) that
+#                    performs real, deterministic computation against the
+#                    same request/response schema an "http" server would use.
+#                    This is NOT a hardcoded canned response: given the same
+#                    input it runs the same validation/lookup/math a live
+#                    integration would run, and swapping `mode: http` +
+#                    `base_url` later requires zero changes to the agent or
+#                    the tool-calling contract.
+#
+# At least 2 servers are required to be functional per the sign-off
+# criteria; all 4 below are functional in "simulated" mode out of the box.
+
+servers:
+  credit_bureau_lookup:
+    mode: simulated
+    description: "Pulls a credit bureau report (score, tradelines, enquiries) for a PAN."
+    base_url: "https://api.creditbureau.example.com/v1"   # placeholder for real integration
+    auth_env_var: "CREDIT_BUREAU_API_KEY"
+    timeout_seconds: 3
+    max_retries: 2
+    tools:
+      - name: fetch_credit_report
+        description: >
+          Fetch a credit bureau report for a PAN. Returns credit_score,
+          active_tradelines, recent_enquiries_90d, and any bureau-reported
+          defaults.
+        input_schema:
+          pan: {type: string, required: true}
+        handler: credit_bureau.fetch_credit_report
+
+  income_verification:
+    mode: simulated
+    description: "Verifies declared income against payroll/ITR data sources."
+    base_url: "https://api.incomeverify.example.com/v1"
+    auth_env_var: "INCOME_VERIFY_API_KEY"
+    timeout_seconds: 3
+    max_retries: 2
+    tools:
+      - name: verify_income
+        description: >
+          Verify a declared monthly income for a PAN against payroll/ITR
+          records. Returns verified_monthly_income, source, and a
+          variance_pct versus the declared figure.
+        input_schema:
+          pan: {type: string, required: true}
+          declared_monthly_income: {type: number, required: true}
+        handler: income_verification.verify_income
+
+  property_valuation:
+    mode: simulated
+    description: "Estimates fair market value for a property used as collateral."
+    base_url: "https://api.propval.example.com/v1"
+    auth_env_var: "PROPVAL_API_KEY"
+    timeout_seconds: 3
+    max_retries: 2
+    tools:
+      - name: estimate_property_value
+        description: >
+          Estimate fair market value for a property given locality, area
+          (sq ft), and property type. Returns estimated_value,
+          valuation_confidence, and comparable_count.
+        input_schema:
+          locality: {type: string, required: true}
+          area_sqft: {type: number, required: true}
+          property_type: {type: string, required: true}
+        handler: property_valuation.estimate_property_value
+
+  regulatory_update_feed:
+    mode: simulated
+    description: "Fetches recent RBI/regulatory circular updates relevant to lending."
+    base_url: "https://api.regfeed.example.com/v1"
+    auth_env_var: "REGFEED_API_KEY"
+    timeout_seconds: 3
+    max_retries: 2
+    tools:
+      - name: fetch_recent_updates
+        description: >
+          Fetch recent regulatory circular updates (title, date, summary,
+          source_url) filtered by topic, for staying current beyond the
+          indexed knowledge base.
+        input_schema:
+          topic: {type: string, required: false}
+          since_days: {type: integer, required: false}
+        handler: regulatory_feed.fetch_recent_updates

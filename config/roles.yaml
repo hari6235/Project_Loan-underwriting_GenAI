@@ -1,0 +1,67 @@
+# FILE: config/roles.yaml
+# Role-permission matrix for role-based RAG (Section 3.6, Week 8).
+# allowed_doc_types filters retrieval BEFORE the re-ranker stage
+# (see rbac/filter.py). allowed_jurisdictions is an optional second axis;
+# leave empty/omit to mean "no restriction on this axis".
+#
+# doc_type values must match the metadata.doc_type values chunks are
+# tagged with at ingest time (policy | circular | memo | audit).
+
+roles:
+  junior_analyst:
+    description: >
+      Front-line underwriting analyst. Can see published policy and
+      regulatory text, but not internal audit memos or override records.
+    allowed_doc_types:
+      - policy
+      - circular
+    denied_doc_types:
+      - audit
+      - memo
+    can_request_hitl_override: false
+
+  senior_underwriter:
+    description: >
+      Senior underwriter. Adds past-case underwriting memos to the junior
+      analyst's access, still excluded from audit-only material.
+    allowed_doc_types:
+      - policy
+      - circular
+      - memo
+    denied_doc_types:
+      - audit
+    can_request_hitl_override: false
+
+  credit_head:
+    description: >
+      Head of credit risk. Full access including policy override records
+      and audit memos; the only role permitted to approve HITL overrides.
+    allowed_doc_types:
+      - policy
+      - circular
+      - memo
+      - audit
+    denied_doc_types: []
+    can_request_hitl_override: true
+
+  auditor:
+    description: >
+      Independent auditor. Full read access for audit purposes, but never
+      permitted to approve/override a HITL decision (segregation of duties).
+    allowed_doc_types:
+      - policy
+      - circular
+      - memo
+      - audit
+    denied_doc_types: []
+    can_request_hitl_override: false
+
+# Fallback applied to any role name not listed above (fail closed, not open).
+default_role:
+  allowed_doc_types: []
+  denied_doc_types:
+    - policy
+    - circular
+    - memo
+    - audit
+  can_request_hitl_override: false

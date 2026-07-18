@@ -22,5 +22,5 @@ def reciprocal_rank_fusion(dense_results: list[dict], sparse_results: list[dict]
 
 def hybrid_search(query: str, vector_store, bm25_retriever, embedder, k: int = 10, filters: dict = None) -> list[dict]:
     dense = vector_store.search(query, embedder, k=k, filters=filters)
-    sparse = bm25_retriever.search(query, k=k)
+    sparse = bm25_retriever.search(query, k=k, filters=filters)
     return reciprocal_rank_fusion(dense, sparse)[:k]

@@ -1,0 +1,44 @@
+# FILE: config/hitl_rules.yaml
+# HITL trigger rules for Loan Underwriting & Credit Risk (Section 3.3, Week 8).
+# Each rule is evaluated against a structured `decision_context` dict that
+# core/chain.py assembles from the current turn's tool outputs before
+# finalising a response (see hitl/triggers.py for the evaluator).
+#
+# condition.field is looked up in decision_context via dotted-path lookup.
+# operator is one of: gt, gte, lt, lte, eq, neq, in, contains, exists.
+
+rules:
+  - id: high_loan_amount
+    description: "Loan amount exceeds ₹50L -- requires senior sign-off."
+    condition:
+      field: loan_amount
+      operator: gt
+      value: 5000000
+    severity: high
+
+  - id: dti_policy_exception
+    description: "DTI ratio requested exceeds the policy-approved band."
+    condition:
+      field: dti_assessment.risk_tier
+      operator: eq
+      value: "EXCEPTION_REQUIRED"
+    severity: high
+
+  - id: policy_override_requested
+    description: "User is explicitly asking to override or bypass stated policy."
+    condition:
+      field: policy_override_requested
+      operator: eq
+      value: true
+    severity: critical
+
+  - id: low_credit_score
+    description: "Credit score below the auto-approval threshold (650)."
+    condition:
+      field: credit_score_assessment.credit_score
+      operator: lt
+      value: 650
+    severity: medium
+
+# Applies to every rule unless a rule sets its own `auto_reject_after_hours`.
+default_expiry_hours: 48

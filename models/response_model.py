@@ -27,3 +27,5 @@ class ChatResponse(BaseModel):
     history: Optional[List[Any]] = []
     type: Optional[str] = None
     citations: Optional[List[Citation]] = None
+    hitl_task_id: Optional[str] = None
+    hitl_severity: Optional[str] = None

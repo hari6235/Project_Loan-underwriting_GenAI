@@ -1,0 +1,23 @@
+# FILE: prompts/hitl_review.yaml
+name: hitl_review
+active_version: "1.0.0"
+versions:
+  - version: "1.0.0"
+    author: team-alpha
+    created_at: "2026-07-08"
+    changelog: "Initial version: structured summary shown to a human reviewer in the HITL approval panel."
+    model_compatibility: ["gpt-4o-mini", "gpt-4o", "claude-sonnet-4-20250514"]
+    input_variables: [recommendation, triggered_rules, confidence_score, context_summary]
+    template: |
+      HUMAN REVIEW REQUIRED
+
+      Triggered rule(s): {triggered_rules}
+      AI confidence: {confidence_score}
+
+      Proposed recommendation:
+      {recommendation}
+
+      Supporting context (tool outputs / retrieved chunks):
+      {context_summary}
+
+      Please review and respond APPROVE or REJECT with comments.

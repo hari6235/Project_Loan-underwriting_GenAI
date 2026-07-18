@@ -3,6 +3,7 @@ import os
 from langchain_community.vectorstores import FAISS
 from langchain_core.documents import Document
 from rag.vectorstores.base import VectorStore
+from rag.filters import matches_filters
 
 DEFAULT_INDEX_DIR = "data/vector_index/faiss"
 
@@ -24,7 +25,7 @@ class FAISSStore(VectorStore):
         results = self.index.similarity_search_with_score(query, k=k)
         out = []
         for doc, score in results:
-            if filters and not all(doc.metadata.get(fk) == fv for fk, fv in filters.items()):
+            if filters and not matches_filters(doc.metadata, filters):
                 continue
             out.append({"text": doc.page_content, "metadata": doc.metadata, "score": float(score)})
         return out

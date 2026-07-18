@@ -13,10 +13,15 @@ def mrr(retrieved_ids: list[str], expected_ids: list[str]) -> float:
 
 
 def run_intrinsic(golden_set: list[dict], retrieve_fn) -> dict:
+    """retrieve_fn(item: dict) -> list[dict] of reranked chunks. Takes the
+    full golden-set item (not just query/history) so retrieve_fn can honor
+    item["role"] for RBAC-aware retrieval -- otherwise a role_boundary_test
+    item would be retrieved under the wrong (or no) role and the metric
+    would silently measure the wrong thing."""
     hits, mrrs = [], []
     for item in golden_set:
-        retrieved = retrieve_fn(item["query"], item.get("history", []))
+        retrieved = retrieve_fn(item)
         ids = [r["metadata"].get("chunk_id") for r in retrieved]
         hits.append(hit_at_k(ids, item["expected_chunk_ids"]))
         mrrs.append(mrr(ids, item["expected_chunk_ids"]))
-    return {"hit_rate_at_5": sum(hits) / len(hits), "mrr": sum(mrrs) / len(mrrs)}
+    return {"hit_rate_at_5": sum(hits) / len(hits) if hits else None, "mrr": sum(mrrs) / len(mrrs) if mrrs else None, "n": len(golden_set)}
