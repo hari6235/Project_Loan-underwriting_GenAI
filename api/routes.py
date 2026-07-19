@@ -49,6 +49,8 @@ def chat(req: ChatRequest, role: str = Depends(resolve_role)):
     response = result["response"]
     response_type = result.get("type")
     citations = result.get("citations")
+    hitl_task_id = result.get("hitl_task_id")
+    hitl_severity = result.get("hitl_severity")
 
     memory.add(
         req.session_id,
@@ -62,6 +64,8 @@ def chat(req: ChatRequest, role: str = Depends(resolve_role)):
         history=memory.get(req.session_id),
         type=response_type,
         citations=citations,
+        hitl_task_id=hitl_task_id,
+        hitl_severity=hitl_severity,
     )
 
 

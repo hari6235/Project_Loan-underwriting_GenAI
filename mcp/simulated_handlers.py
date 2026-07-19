@@ -146,15 +146,29 @@ _SEED_UPDATES = [
 ]
 
 
+def _normalize_topic(s: str) -> str:
+    return s.strip().lower().replace("_", " ").replace("-", " ")
+
+
 def regulatory_feed_fetch_recent_updates(topic: str = None, since_days: int = 90) -> dict:
     since_days = since_days or 90
     now = datetime.now(timezone.utc)
+    normalized_topic = _normalize_topic(topic) if topic else None
     results = []
     for item in _SEED_UPDATES:
         if item["days_ago"] > since_days:
             continue
-        if topic and topic.strip().lower() not in item["topic"]:
-            continue
+        if normalized_topic:
+            item_topic = _normalize_topic(item["topic"])
+            # Bidirectional substring match, not just one direction: a
+            # realistic LLM-extracted phrase like "loan restructuring"
+            # must match the seed tag "restructuring" (tag is a substring
+            # of the phrase), and a short query like "ltv" must also match
+            # an exact tag "ltv" (phrase is a substring of the tag). The
+            # old code only checked one direction, so any multi-word topic
+            # phrase silently matched nothing.
+            if item_topic not in normalized_topic and normalized_topic not in item_topic:
+                continue
         results.append({
             "title": item["title"],
             "date": (now - timedelta(days=item["days_ago"])).date().isoformat(),

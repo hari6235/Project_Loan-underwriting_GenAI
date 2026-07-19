@@ -6,7 +6,7 @@ no special-casing anywhere in the agent loop."""
 from __future__ import annotations
 
 from langchain_core.tools import StructuredTool
-from pydantic import BaseModel, create_model
+from pydantic import BaseModel, Field, create_model
 
 from mcp.client import get_client, MCPInvocationError
 from mcp.registry import get_registry, MCPToolSpec
@@ -17,13 +17,27 @@ logger = get_logger("mcp.tool_adapter")
 _JSON_TYPE_MAP = {"string": str, "number": float, "integer": int, "boolean": bool}
 
 
+def _field_description(spec: dict) -> str:
+    parts = []
+    if spec.get("description"):
+        parts.append(str(spec["description"]))
+    if spec.get("enum"):
+        parts.append(f"Must be one of: {', '.join(str(v) for v in spec['enum'])}.")
+    return " ".join(parts)
+
+
 def _build_args_schema(tool_name: str, input_schema: dict) -> type[BaseModel]:
     fields = {}
     for field_name, spec in (input_schema or {}).items():
         py_type = _JSON_TYPE_MAP.get(spec.get("type", "string"), str)
         required = bool(spec.get("required"))
-        default = ... if required else None
-        fields[field_name] = (py_type if required else py_type | None, default)
+        description = _field_description(spec)
+        if required:
+            field_info = Field(..., description=description) if description else Field(...)
+            fields[field_name] = (py_type, field_info)
+        else:
+            field_info = Field(default=None, description=description) if description else Field(default=None)
+            fields[field_name] = (py_type | None, field_info)
     model_name = "".join(part.title() for part in tool_name.split("_")) + "Args"
     return create_model(model_name, **fields)
 

@@ -64,13 +64,24 @@ servers:
     tools:
       - name: estimate_property_value
         description: >
-          Estimate fair market value for a property given locality, area
-          (sq ft), and property type. Returns estimated_value,
-          valuation_confidence, and comparable_count.
+          Estimate fair market value for a property given a locality TIER
+          (not a specific place name), area (sq ft), and property type.
+          Returns estimated_value, valuation_confidence, and comparable_count.
         input_schema:
-          locality: {type: string, required: true}
+          locality:
+            type: string
+            required: true
+            enum: [metro, urban, semi_urban, rural]
+            description: >
+              The locality classification tier, not a specific city/area
+              name. If the user says a specific place (e.g. "Bandra,
+              Mumbai"), classify it into one of these tiers yourself
+              rather than asking the user to restate it as a tier.
           area_sqft: {type: number, required: true}
-          property_type: {type: string, required: true}
+          property_type:
+            type: string
+            required: true
+            enum: [apartment, independent_house, plot, commercial]
         handler: property_valuation.estimate_property_value
 
   regulatory_update_feed:

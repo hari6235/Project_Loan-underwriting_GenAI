@@ -266,6 +266,25 @@ with hitl_tab:
         "low credit score, DTI exception) pause here for review before being finalised."
     )
 
+    # The pending queue itself is intentionally the SAME for every role (anyone
+    # should be able to see what's pending) -- only the ability to act on it is
+    # role-gated. Surface that gating clearly UP FRONT here, so switching roles
+    # in the sidebar has a visible effect on this tab even before you click
+    # anything (previously the only signal was a 403 error after clicking).
+    try:
+        auth_resp = requests.get(AUTH_CONTEXT_URL, headers={"X-User-Role": st.session_state.user_role}, timeout=5)
+        can_approve = auth_resp.json().get("can_request_hitl_override", False) if auth_resp.status_code == 200 else False
+    except requests.exceptions.RequestException:
+        can_approve = False
+
+    if can_approve:
+        st.success(f"✅ Role **{st.session_state.user_role}** can approve/reject HITL tasks.")
+    else:
+        st.warning(
+            f"👁️ Role **{st.session_state.user_role}** can view this queue but cannot approve/reject "
+            f"(segregation of duties — switch to a role with override permission, e.g. `credit_head`, to act on tasks)."
+        )
+
     if st.button("🔄 Refresh pending tasks"):
         st.rerun()
 
@@ -291,9 +310,9 @@ with hitl_tab:
                 st.json(task.get("context", {}))
                 st.caption(f"Created: {task['created_at']} · Expires: {task.get('expires_at', 'n/a')}")
 
-                comments = st.text_area("Review comments", key=f"comments_{task['task_id']}")
+                comments = st.text_area("Review comments", key=f"comments_{task['task_id']}", disabled=not can_approve)
                 col_a, col_r = st.columns(2)
-                if col_a.button("✅ Approve", key=f"approve_{task['task_id']}"):
+                if col_a.button("✅ Approve", key=f"approve_{task['task_id']}", disabled=not can_approve):
                     resp = requests.post(
                         f"{HITL_REVIEW_URL}/{task['task_id']}",
                         json={"decision": "approve", "comments": comments, "decided_by": st.session_state.user_role},
@@ -306,7 +325,7 @@ with hitl_tab:
                         st.error(f"Role '{st.session_state.user_role}' cannot approve HITL tasks (needs can_request_hitl_override).")
                     else:
                         st.error(resp.text)
-                if col_r.button("❌ Reject", key=f"reject_{task['task_id']}"):
+                if col_r.button("❌ Reject", key=f"reject_{task['task_id']}", disabled=not can_approve):
                     resp = requests.post(
                         f"{HITL_REVIEW_URL}/{task['task_id']}",
                         json={"decision": "reject", "comments": comments, "decided_by": st.session_state.user_role},

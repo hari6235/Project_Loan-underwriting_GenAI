@@ -17,13 +17,13 @@
     "faithfulness": null,
     "answer_correctness": null,
     "answer_relevancy": null,
-    "n": 10,
-    "n_failed_rows": 10
+    "n": 0,
+    "error": "ragas unavailable: No module named 'langchain_community.chat_models.vertexai'"
   },
   "llm_judge": {
     "correctness": 2.8,
-    "completeness": 1.4,
-    "citation_quality": 2.6,
+    "completeness": 1.3,
+    "citation_quality": 3.0,
     "clarity": 5.0,
     "n": 10,
     "judge_failures": 0,
