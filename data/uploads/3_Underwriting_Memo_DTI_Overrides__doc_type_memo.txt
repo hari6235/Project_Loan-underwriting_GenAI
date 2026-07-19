@@ -1,0 +1,28 @@
+INTERNAL UNDERWRITING MEMO — RESTRICTED
+For: Senior Underwriters and above only
+Subject: Past DTI Override Precedents (Home Loans)
+
+This memo summarizes precedent cases where a DTI exception above the
+standard 45% policy threshold was approved, for reference by senior
+underwriting staff evaluating similar borderline cases.
+
+Case A (Loan ref: LN-2091): DTI of 47.5%. Approved with a co-applicant
+addition that reduced the effective DTI to within policy after
+recalculation. No formal exception was required once the co-applicant's
+income was verified.
+
+Case B (Loan ref: LN-2143): DTI of 52%. Escalated to Head of Credit Risk
+per the regulatory circular's exception-handling provision. Approved based
+on the applicant's liquid collateral (fixed deposit lien) covering 18
+months of EMI. Recorded as a formal DTI policy exception.
+
+Case C (Loan ref: LN-2201): DTI of 49%. Declined at senior underwriter
+level; compensating factors were judged insufficient (single income
+source, no collateral offered). Not escalated further, since it remained
+under the 50% regulatory ceiling and was within the underwriter's own
+discretion to decline.
+
+Guidance: Senior underwriters may recommend proceeding with DTI between
+45%-50% based on documented compensating factors, but any recommendation
+above 50% must be routed to Head of Credit Risk per the escalation
+trigger, not decided at the senior underwriter level.

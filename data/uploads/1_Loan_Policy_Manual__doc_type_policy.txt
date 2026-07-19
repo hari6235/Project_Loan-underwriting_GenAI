@@ -1,0 +1,30 @@
+LOAN POLICY MANUAL — RETAIL HOME LOANS
+Section 4: Debt-to-Income (DTI) Ratio Requirements
+
+4.1 Maximum DTI Ratio
+The maximum debt-to-income ratio permitted for a standard home loan approval
+is 45%. DTI is calculated as total monthly debt obligations (including the
+proposed EMI) divided by gross monthly income.
+
+4.2 Standard Approval Band
+- DTI up to 40%: Standard approval, no additional review required.
+- DTI 40%-45%: Approved with standard documentation; compensating factors
+  (strong credit score above 750, stable employment history of 5+ years)
+  are recorded but not required.
+
+4.3 Exceptions
+Loan applications with DTI exceeding 45% are not eligible for standard
+approval. Any request to proceed above this threshold is classified as a
+policy exception and must be escalated for senior review before any
+recommendation is issued to the applicant.
+
+4.4 Escalation Trigger
+Per the underwriting assistant's configured trigger rules, any DTI
+calculation returning a risk_level of HIGH (i.e., DTI > 50%) automatically
+routes the case to human-in-the-loop review rather than an automated
+recommendation, regardless of any other compensating factors.
+
+4.5 Reference
+This policy implements the debt-servicing guidelines issued under the
+applicable RBI circular on retail lending prudential norms (see the
+related regulatory circular for jurisdiction-specific thresholds).

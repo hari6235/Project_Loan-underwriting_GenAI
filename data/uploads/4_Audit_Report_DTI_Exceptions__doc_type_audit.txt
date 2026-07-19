@@ -1,0 +1,36 @@
+INTERNAL AUDIT REPORT — CONFIDENTIAL
+Audit Cycle: Q1 2026
+Subject: Review of DTI Policy Exception Approvals (Home Loans)
+
+1. Scope
+This audit reviewed all DTI policy exceptions approved above the 50%
+regulatory ceiling during the review period, per RBI/RC-2026/014 Section 3
+reporting requirements.
+
+2. Findings
+2.1 Of 14 exceptions approved during the period, 12 were correctly
+    documented with reviewing-officer rationale on file. 2 exceptions
+    (Loan refs LN-2143, LN-2298) were approved but the rationale
+    documentation was filed more than 30 days after approval, in
+    violation of internal SLA (though within the regulatory 7-year
+    retention requirement).
+
+2.2 One case (Loan ref: LN-2276, DTI 54%) was identified where the
+    exception was approved by a Senior Underwriter rather than an officer
+    at Head of Credit Risk level or above, in violation of Section 3(a) of
+    the governing circular. This has been flagged as a control gap and
+    referred to Compliance for corrective action.
+
+3. Recommendation
+The audit recommends implementing a system-level hard block preventing any
+DTI exception above 50% from being finalized without a recorded
+Head-of-Credit-Risk-level approval, rather than relying solely on manual
+process adherence. This corresponds to the human-in-the-loop escalation
+trigger already configured in the underwriting assistant for DTI risk
+level HIGH.
+
+4. Status
+Corrective action on the control gap (2.2) is in progress; target closure
+date is end of Q2 2026. This report and underlying case files are subject
+to independent auditor review and are not for general underwriting staff
+distribution.

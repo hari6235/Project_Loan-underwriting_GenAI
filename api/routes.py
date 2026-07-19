@@ -3,7 +3,7 @@ import json
 import os
 import uuid
 
-from fastapi import APIRouter, Query, UploadFile, File, HTTPException, Depends
+from fastapi import APIRouter, Query, UploadFile, File, Form, HTTPException, Depends
 from pydantic import BaseModel
 
 from core.chain import run_chain
@@ -96,7 +96,7 @@ def health():
 
 
 # -------------------------
-# INGEST (Week 6, unchanged)
+# INGEST
 # -------------------------
 _jobs: dict = {}
 
@@ -107,8 +107,17 @@ def _existing_source_names() -> set:
     return {d.metadata.get("source") for d in vector_store.index.docstore._dict.values()}
 
 
+ALLOWED_DOC_TYPES = {"policy", "circular", "memo", "audit"}
+
+
 @router.post("/ingest")
-async def ingest(file: UploadFile = File(...)):
+async def ingest(file: UploadFile = File(...), doc_type: str = Form(...)):
+    if doc_type not in ALLOWED_DOC_TYPES:
+        raise HTTPException(
+            status_code=400,
+            detail=f"doc_type must be one of {sorted(ALLOWED_DOC_TYPES)}, got '{doc_type}'",
+        )
+
     job_id = str(uuid.uuid4())
     _jobs[job_id] = {"status": "running", "progress": 0}
 
@@ -125,6 +134,15 @@ async def ingest(file: UploadFile = File(...)):
             logger.info("Ingest job=%s: existing source '%s' found, replacing", job_id, file.filename)
 
         docs = load_document(path)
+        # Tag every loaded doc with its doc_type BEFORE chunking, so
+        # chunk_documents()'s metadata spread ({**doc["metadata"], ...})
+        # carries doc_type onto every resulting chunk. This is what
+        # rbac/filter.py's role filter matches against at retrieval time --
+        # without this, every chunk has no doc_type and the fail-closed
+        # filter excludes it for every role.
+        for d in docs:
+            d["metadata"]["doc_type"] = doc_type
+
         chunks = chunk_documents(docs, strategy=os.getenv("CHUNK_STRATEGY", "recursive"))
         vector_store.add(chunks, embedder)
         vector_store.persist()

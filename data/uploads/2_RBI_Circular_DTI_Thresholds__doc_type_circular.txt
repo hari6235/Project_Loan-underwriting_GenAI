@@ -1,0 +1,30 @@
+REGULATORY CIRCULAR — PRUDENTIAL NORMS FOR RETAIL LENDING
+Circular Ref: RBI/RC-2026/014
+Subject: Debt-to-Income Thresholds for Housing Finance
+
+1. Applicability
+This circular applies to all scheduled banks and housing finance companies
+extending retail home loans.
+
+2. Prescribed DTI Ceiling
+Regulated entities shall not extend home loan credit where the borrower's
+debt-to-income ratio, inclusive of the proposed instalment, exceeds 50% of
+verified gross monthly income, except under the exception-handling
+provisions described in Section 3.
+
+3. Exception Handling
+An entity may extend credit above the 50% DTI ceiling only where:
+(a) the exception is reviewed and explicitly approved by an officer at or
+    above the level of Head of Credit Risk (or equivalent), and
+(b) the approval, including the reviewing officer's rationale, is recorded
+    and retained for audit purposes for a minimum of 7 years.
+
+4. Reporting
+Any DTI exception approved under Section 3 must be reported in the
+entity's quarterly prudential returns and is subject to review during
+regulatory audit.
+
+5. Effective Date
+This circular is effective for all loan applications processed on or
+after the date of issue and supersedes prior guidance on DTI ceilings for
+retail housing finance.

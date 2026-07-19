@@ -186,11 +186,16 @@ with docs_tab:
         "Policy manuals, RBI circulars, memos (PDF, DOCX, HTML, TXT, CSV)",
         type=["pdf", "docx", "html", "htm", "txt", "csv"],
     )
+    doc_type = st.selectbox(
+        "Document type (drives role-based retrieval access)",
+        ["policy", "circular", "memo", "audit"],
+    )
 
     if uploaded_file is not None and st.button("Ingest Document"):
         files = {"file": (uploaded_file.name, uploaded_file.getvalue())}
+        data = {"doc_type": doc_type}
         try:
-            resp = requests.post(INGEST_URL, files=files)
+            resp = requests.post(INGEST_URL, files=files, data=data)
         except requests.exceptions.RequestException as e:
             st.error(f"Could not reach backend: {e}")
         else:
