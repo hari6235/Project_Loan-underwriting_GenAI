@@ -1,38 +1,40 @@
 # Loan Underwriting & Credit Risk Assistant
 
-This repository contains a LangChain-based assistant for loan underwriting and credit-risk support. The current implementation combines a FastAPI backend, a Streamlit frontend, retrieval-augmented generation (RAG) over uploaded banking documents, deterministic underwriting tools, MCP-backed tools, human-in-the-loop approval workflows, RBAC, and automated evaluation.
+This repository contains a full-stack assistant for loan underwriting and credit-risk support. The current implementation combines a FastAPI backend, a Streamlit frontend, retrieval-augmented generation (RAG) over uploaded banking documents, deterministic underwriting tools, MCP-backed integrations, human-in-the-loop approval workflows, RBAC, and automated evaluation.
 
-## What is included in the current build
+## What is included in the latest build
 
-- A production-style FastAPI service with chat, health, ingest, retrieval, HITL, prompt-management, RBAC, and evaluation endpoints
-- A Streamlit UI with separate tabs for chat, document management, HITL approvals, prompt versioning, MCP tools, and eval dashboards
-- RAG over uploaded documents (PDF, DOCX, HTML, TXT, CSV) with chunking, embedding, BM25/hybrid retrieval, and reranking
+- A FastAPI service with endpoints for chat, health checks, document ingestion, retrieval, HITL review, prompt management, RBAC context, MCP tools, and evaluation
+- A Streamlit UI with dedicated tabs for chat, document management, HITL approvals, prompt versioning, MCP tools, and the evaluation dashboard
+- RAG over uploaded policy and banking documents (PDF, DOCX, HTML, TXT, CSV) using chunking, embedding, BM25/hybrid retrieval, and reranking
 - Guardrails for PII detection, prompt injection prevention, and banking-topic filtering
-- Human-in-the-loop review for high-risk or policy-sensitive actions
+- Human-in-the-loop review for high-risk or policy-sensitive underwriting actions
 - Role-based access control with audit logging and segregation-of-duties checks
 - Prompt versioning and rollback from the UI
-- LangSmith tracing and evaluation support via regression, drift, and dashboard workflows
+- LangSmith tracing and evaluation support through regression, drift, and dashboard workflows
 
-## Project layout
+## Project structure
 
 ```text
 app.py                  # Streamlit frontend
-api/                    # FastAPI routes and app setup
-chains/                 # Orchestration for tool/RAG/HITL flows
+api/                    # FastAPI routes and service wiring
+chains/                 # Orchestration for tool, RAG, and HITL flows
 rag/                    # Loaders, chunkers, embeddings, retrieval, reranking
-tools/                  # Credit score, DTI, document verification, RAG tools
-mcp/                    # MCP registry, client, adapter, simulated handlers
-hitl/                   # HITL task model, store, trigger engine, manager
-rbac/                   # Role registry, validator, audit, filtering
-eval/                   # Golden-set eval, regression suite, drift check, dashboard
-prompts/                # Prompt YAML and versioned prompt definitions
-config/                 # HITL rules, prompt config, MCP server config
+tools/                  # Credit score, DTI, policy flag, document, and RAG tools
+mcp/                    # MCP registry, client, adapter, and simulated handlers
+hitl/                   # HITL task model, store, trigger engine, and manager
+rbac/                   # Role registry, validator, audit, and filtering
+eval/                   # Golden-set eval, regression suite, drift checks, and dashboard
+prompts/                # Prompt YAML definitions and versioned prompt configuration
+config/                 # HITL rules, role config, and MCP server configuration
+data/                   # Few-shot examples, applicant store, vector index assets
+reports/                # Evaluation and regression reports
 ```
 
 ## Prerequisites
 
 - Python 3.10+
-- An OpenAI or Anthropic API key (depending on the model provider configured)
+- An OpenAI or Anthropic API key (depending on the configured provider)
 - Internet access for external LLM calls and optional LangSmith tracing
 
 ## Environment setup
@@ -74,7 +76,7 @@ streamlit run app.py
 
 Then open `http://localhost:8501`.
 
-## Main workflows
+## Key workflows
 
 - Chat with the underwriting assistant
 - Upload and index policy or support documents from the UI
@@ -82,7 +84,7 @@ Then open `http://localhost:8501`.
 - Review pending HITL approvals for high-risk actions
 - Switch roles from the sidebar to test RBAC behavior
 - Roll back prompt versions from the prompt management tab
-- Trigger evaluation flows from the eval dashboard or API endpoints
+- Trigger evaluation flows from the evaluation dashboard or API endpoints
 
 ## API highlights
 
@@ -105,7 +107,7 @@ Run the test suite:
 pytest
 ```
 
-Run health checks or evaluation endpoints from the API once the backend is running:
+Health checks can be verified once the backend is running:
 
 ```bash
 curl http://localhost:8000/health
@@ -113,7 +115,7 @@ curl http://localhost:8000/health
 
 ## Notes
 
-- The app stores session memory and HITL state locally in the project workspace
+- Session memory and HITL state are stored locally in the workspace
 - Uploaded documents are stored under `data/uploads/`
 - Audit logs and evaluation reports are written under `logs/` and `reports/`
 - LangSmith tracing is active when the relevant environment variables are configured
@@ -124,10 +126,10 @@ This project is intended for educational and demonstration purposes.
 
 ---
 
-## 📞 Support
+## Support
 
 For issues or questions:
-1. Check logs: `cat logs/interactions.log`
-2. Review API docs: `http://localhost:8000/docs`
-3. Test endpoints manually in Streamlit UI
-4. Verify `.env` configuration
+1. Review the logs in `logs/interactions.log`
+2. Open the API docs at `http://localhost:8000/docs`
+3. Test the flows through the Streamlit UI
+4. Verify the `.env` configuration
