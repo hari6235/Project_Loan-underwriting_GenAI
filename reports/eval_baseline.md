@@ -21,10 +21,10 @@
     "error": "ragas unavailable: No module named 'langchain_community.chat_models.vertexai'"
   },
   "llm_judge": {
-    "correctness": 2.8,
-    "completeness": 1.3,
+    "correctness": 3.0,
+    "completeness": 1.5,
     "citation_quality": 3.0,
-    "clarity": 5.0,
+    "clarity": 4.8,
     "n": 10,
     "judge_failures": 0,
     "judge_model": "claude-haiku-4-5-20251001"

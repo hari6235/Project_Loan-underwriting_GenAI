@@ -1,6 +1,3 @@
-# Regression Suite Result (2026-07-19T14:59:34.345915+00:00)
-
-```json
 {
   "timestamp": "2026-07-19T14:59:34.345915+00:00",
   "checks": {
@@ -78,4 +75,3 @@
     "llm_judge_model": "claude-haiku-4-5-20251001"
   }
 }
-```

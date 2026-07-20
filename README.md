@@ -113,6 +113,35 @@ Health checks can be verified once the backend is running:
 curl http://localhost:8000/health
 ```
 
+### Comprehensive Test Suite
+
+For complete test documentation, coverage details, and evaluation instructions, see:
+- **[TESTING.md](TESTING.md)** - Test suite overview and evaluation guide
+- **[tests/TEST_GUIDE.md](tests/TEST_GUIDE.md)** - Detailed test documentation (130+ tests)
+- **[tests/README.md](tests/README.md)** - Quick reference guide
+
+**Test Coverage:**
+- 48 new comprehensive functional tests
+- 25+ API integration tests
+- 96+ existing unit tests
+- **130+ total tests** covering all major features
+
+Run tests with:
+```bash
+# All tests
+python -m pytest tests/ -v
+
+# Specific test suite
+python -m pytest tests/test_functional_suite.py -v
+
+# API tests (requires backend)
+python -m pytest tests/test_api_integration.py -v
+
+# With coverage report
+pytest --cov=. --cov-report=html
+```
+
+
 ## Notes
 
 - Session memory and HITL state are stored locally in the workspace
